@@ -1,0 +1,53 @@
+# PyTorch and related libraries
+# Note: PyTorch should be installed with CUDA support using:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# Hugging Face libraries
+transformers==4.35.0
+datasets==2.14.5
+accelerate==0.23.0
+peft==0.5.0
+bitsandbytes==0.41.1
+sentencepiece==0.1.99
+protobuf==4.24.4
+
+# ONNX and optimization
+onnx==1.14.1
+onnxruntime-gpu==1.16.0
+optimum==1.12.0
+
+# FastAPI and related
+fastapi==0.104.0
+uvicorn==0.23.2
+pydantic==2.4.2
+python-multipart==0.0.6
+
+# Vector databases
+pinecone-client==2.2.4
+faiss-gpu==1.7.2
+psycopg2-binary==2.9.9
+
+# Testing
+pytest==7.4.0
+pytest-cov==4.1.0
+pytest-benchmark==4.0.0
+pytest-mock==3.11.1
+
+# Code quality
+black==23.10.0
+pylint==2.17.0
+mypy==1.5.0
+pre-commit==3.5.0
+isort==5.12.0
+
+# Utilities
+numpy>=1.24.0
+scipy>=1.10.0
+tqdm>=4.65.0
+requests>=2.31.0
+pyyaml>=6.0.0
+matplotlib>=3.7.0
+pandas>=2.0.0 

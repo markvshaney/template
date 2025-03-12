@@ -1,0 +1,312 @@
+{
+  "name": "AI-Enhanced Application Tech Stack",
+  "version": "1.0.0",
+  "description": "A comprehensive tech stack for AI-enhanced applications with memory systems",
+  "framework": {
+    "name": "Next.js",
+    "version": "^14.0.0",
+    "typescript": true,
+    "features": ["App Router", "Server Components", "Server Actions"]
+  },
+  "ui": {
+    "component_library": "shadcn/ui",
+    "styling": "Tailwind CSS",
+    "documentation": "Storybook",
+    "storybook": {
+      "version": "^7.6.0",
+      "addons": [
+        "@storybook/addon-links",
+        "@storybook/addon-essentials",
+        "@storybook/addon-interactions",
+        "@storybook/addon-a11y"
+      ]
+    }
+  },
+  "database": {
+    "primary": {
+      "type": "PostgreSQL",
+      "version": "^15.0",
+      "orm": "Prisma",
+      "extensions": ["pgvector"]
+    },
+    "vector_store": {
+      "options": [
+        {
+          "name": "Pinecone",
+          "version": "^1.1.0",
+          "features": ["vector similarity search", "metadata filtering", "namespaces"]
+        },
+        {
+          "name": "Supabase Vector",
+          "features": ["pgvector integration", "hybrid search"]
+        }
+      ]
+    }
+  },
+  "ai": {
+    "model_handling": {
+      "frameworks": [
+        {
+          "name": "TensorFlow.js",
+          "version": "^4.10.0",
+          "use_case": "Browser-based inference"
+        },
+        {
+          "name": "ONNX Runtime",
+          "version": "^1.16.0",
+          "use_case": "Cross-platform model execution"
+        },
+        {
+          "name": "transformers.js",
+          "version": "^2.2.0",
+          "use_case": "Hugging Face models in JavaScript"
+        },
+        {
+          "name": "PyTorch",
+          "version": "^2.1.0",
+          "use_case": "Deep learning and model training"
+        },
+        {
+          "name": "Hugging Face Transformers",
+          "version": "^4.35.0",
+          "use_case": "Pre-trained models and fine-tuning"
+        }
+      ],
+      "optimization": [
+        "8-bit quantization",
+        "GPU acceleration",
+        "Sparse activation",
+        "Model pruning",
+        "ONNX export",
+        "LoRA fine-tuning"
+      ]
+    },
+    "local_models": {
+      "provider": "Ollama",
+      "version": "^0.1.14",
+      "supported_models": [
+        "Mistral-7B",
+        "Llama-2",
+        "Phi-2",
+        "Gemma"
+      ],
+      "features": [
+        "Local model serving",
+        "Model fine-tuning",
+        "Custom model creation",
+        "API access"
+      ]
+    },
+    "embeddings": {
+      "models": [
+        {
+          "name": "all-MiniLM-L6-v2",
+          "dimensions": 384,
+          "provider": "Sentence Transformers"
+        },
+        {
+          "name": "text-embedding-ada-002",
+          "dimensions": 1536,
+          "provider": "OpenAI"
+        },
+        {
+          "name": "e5-large-v2",
+          "dimensions": 1024,
+          "provider": "Hugging Face"
+        }
+      ],
+      "libraries": [
+        {
+          "name": "vectorious",
+          "version": "^6.1.0",
+          "features": ["vector operations", "similarity calculations"]
+        },
+        {
+          "name": "similarity",
+          "version": "^1.2.1",
+          "features": ["cosine similarity", "euclidean distance"]
+        }
+      ]
+    },
+    "memory_systems": {
+      "types": [
+        {
+          "name": "Neocortical",
+          "implementation": "Fine-tuned base model",
+          "characteristics": ["Slow learning", "Distributed representation"]
+        },
+        {
+          "name": "Hippocampal",
+          "implementation": "RAG with vector database",
+          "characteristics": ["Fast learning", "Episodic storage"]
+        }
+      ],
+      "management": [
+        "Prediction error calculation",
+        "Priority queue for replay",
+        "Consolidation scheduling",
+        "Parameter importance tracking",
+        "Selective regularization",
+        "Conflict resolution"
+      ]
+    },
+    "specializations": [
+      {
+        "name": "Factual Knowledge",
+        "type": "Semantic Memory",
+        "implementation": "LoRA adapter"
+      },
+      {
+        "name": "Procedural Memory",
+        "type": "Skills and Processes",
+        "implementation": "LoRA adapter"
+      },
+      {
+        "name": "Social Interaction",
+        "type": "Social Memory",
+        "implementation": "LoRA adapter"
+      },
+      {
+        "name": "Episodic Memory",
+        "type": "Temporal Experiences",
+        "implementation": "RAG with temporal context"
+      }
+    ]
+  },
+  "testing": {
+    "unit": {
+      "javascript": {
+        "framework": "Jest",
+        "version": "^29.7.0",
+        "extensions": ["ts-jest"]
+      },
+      "python": {
+        "framework": "pytest",
+        "version": "^7.4.0",
+        "plugins": [
+          "pytest-cov",
+          "pytest-mock",
+          "pytest-benchmark"
+        ],
+        "features": [
+          "Fixture-based testing",
+          "Parameterized tests",
+          "Test discovery",
+          "Detailed failure reports"
+        ]
+      }
+    },
+    "component": {
+      "framework": "React Testing Library",
+      "version": "^14.1.0",
+      "mocking": "MSW (Mock Service Worker)"
+    },
+    "e2e": {
+      "framework": "Cypress",
+      "version": "^13.6.0"
+    },
+    "visual": {
+      "framework": "Storybook",
+      "addon": "Chromatic",
+      "version": "^7.0.0"
+    }
+  },
+  "deployment": {
+    "hosting": "Vercel",
+    "ci_cd": "GitHub Actions",
+    "containerization": "Docker",
+    "environment_variables": {
+      "management": "Vercel Environment Variables",
+      "local": ".env files with dotenv"
+    }
+  },
+  "code_quality": {
+    "linting": {
+      "javascript": {
+        "tool": "ESLint",
+        "version": "^8.55.0",
+        "plugins": ["typescript", "react", "jsx-a11y"]
+      },
+      "python": {
+        "tool": "pylint",
+        "version": "^2.17.0",
+        "features": [
+          "Custom checkers",
+          "Code style enforcement",
+          "Error detection",
+          "Refactoring suggestions"
+        ],
+        "alternatives": [
+          {
+            "name": "flake8",
+            "version": "^6.1.0",
+            "use_case": "Lightweight linting"
+          },
+          {
+            "name": "mypy",
+            "version": "^1.5.0",
+            "use_case": "Static type checking"
+          }
+        ]
+      }
+    },
+    "formatting": {
+      "javascript": {
+        "tool": "Prettier",
+        "version": "^3.1.0"
+      },
+      "python": {
+        "tool": "black",
+        "version": "^23.10.0",
+        "features": ["Deterministic formatting", "PEP 8 compliance"]
+      }
+    },
+    "pre_commit": {
+      "tool": "Husky",
+      "version": "^8.0.3",
+      "lint_staged": true,
+      "commit_lint": true,
+      "python_hooks": {
+        "tool": "pre-commit",
+        "version": "^3.5.0",
+        "hooks": [
+          "black",
+          "pylint",
+          "pytest"
+        ]
+      }
+    }
+  },
+  "utilities": {
+    "caching": [
+      {
+        "name": "node-cache",
+        "version": "^5.1.2",
+        "use_case": "In-memory caching"
+      },
+      {
+        "name": "lru-cache",
+        "version": "^10.0.1",
+        "use_case": "Least recently used caching strategy"
+      }
+    ],
+    "real_time": {
+      "websockets": "Socket.IO",
+      "version": "^4.7.2"
+    },
+    "python_js_bridge": {
+      "options": [
+        {
+          "name": "FastAPI",
+          "version": "^0.104.0",
+          "use_case": "Python API server"
+        },
+        {
+          "name": "node-fetch",
+          "version": "^3.3.2",
+          "use_case": "JavaScript client for Python API"
+        }
+      ]
+    }
+  }
+} 
