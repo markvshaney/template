@@ -1,0 +1,159 @@
+{
+  "project": {
+    "name": "AI-Enhanced Application",
+    "description": "An application with neocortical/hippocampal memory systems using AI models",
+    "version": "1.0.0"
+  },
+  "tech_stack": {
+    "framework": "Next.js",
+    "language": "TypeScript",
+    "database": "PostgreSQL with Prisma ORM",
+    "vector_store": "Pinecone/Supabase with pgvector",
+    "ai_models": {
+      "local": "Ollama with Mistral-7B",
+      "embeddings": "all-MiniLM-L6-v2 via transformers.js"
+    },
+    "ui": "shadcn/ui with Tailwind CSS",
+    "testing": "Jest, React Testing Library, Cypress, Storybook"
+  },
+  "architecture": {
+    "memory_systems": [
+      {
+        "name": "Neocortical",
+        "description": "Slow-learning system based on fine-tuned models",
+        "implementation": "lib/memory/neocortical.ts"
+      },
+      {
+        "name": "Hippocampal",
+        "description": "Fast-learning system using RAG with vector database",
+        "implementation": "lib/memory/hippocampal.ts"
+      }
+    ],
+    "specializations": [
+      {
+        "name": "Factual Knowledge",
+        "type": "Semantic Memory",
+        "implementation": "LoRA adapter"
+      },
+      {
+        "name": "Procedural Memory",
+        "type": "Skills and Processes",
+        "implementation": "LoRA adapter"
+      },
+      {
+        "name": "Social Interaction",
+        "type": "Social Memory",
+        "implementation": "LoRA adapter"
+      },
+      {
+        "name": "Episodic Memory",
+        "type": "Temporal Experiences",
+        "implementation": "RAG with temporal context"
+      }
+    ]
+  },
+  "code_style": {
+    "indentation": "2 spaces",
+    "quotes": "double",
+    "semicolons": true,
+    "max_line_length": 100,
+    "naming_conventions": {
+      "components": "PascalCase",
+      "functions": "camelCase",
+      "constants": "UPPER_CASE",
+      "types": "PascalCase",
+      "files": {
+        "components": "PascalCase",
+        "utilities": "kebab-case"
+      }
+    }
+  },
+  "documentation": {
+    "jsdoc": true,
+    "readme": true,
+    "architecture_docs": true,
+    "api_docs": true
+  },
+  "testing": {
+    "unit_test_pattern": "**/*.test.ts",
+    "integration_test_pattern": "**/*.integration.test.ts",
+    "e2e_test_pattern": "cypress/e2e/**/*.cy.ts",
+    "coverage_threshold": {
+      "statements": 80,
+      "branches": 70,
+      "functions": 80,
+      "lines": 80
+    }
+  },
+  "ai_specific": {
+    "model_loading": {
+      "quantization": "8-bit",
+      "gpu_optimization": true,
+      "sparse_activation": true
+    },
+    "embeddings": {
+      "dimensions": 384,
+      "model": "all-MiniLM-L6-v2",
+      "normalization": true
+    },
+    "vector_operations": {
+      "similarity_metric": "cosine",
+      "hybrid_search": true
+    },
+    "memory_management": {
+      "prediction_error": true,
+      "priority_queue": true,
+      "consolidation": true,
+      "importance_tracking": true
+    }
+  },
+  "environment_variables": [
+    {
+      "name": "DATABASE_URL",
+      "description": "PostgreSQL connection string",
+      "required": true
+    },
+    {
+      "name": "PINECONE_API_KEY",
+      "description": "Pinecone API key for vector storage",
+      "required": true
+    },
+    {
+      "name": "PINECONE_INDEX",
+      "description": "Pinecone index name",
+      "required": true
+    },
+    {
+      "name": "OLLAMA_HOST",
+      "description": "Ollama host URL",
+      "default": "http://localhost:11434",
+      "required": false
+    },
+    {
+      "name": "NEXT_PUBLIC_API_URL",
+      "description": "Public API URL for client-side requests",
+      "required": true
+    }
+  ],
+  "directory_structure": {
+    "app": "Next.js app router pages",
+    "components": "React components",
+    "lib": {
+      "ai": "AI model handling",
+      "memory": "Memory systems",
+      "db": "Database utilities",
+      "services": "External service integrations"
+    },
+    "public": "Static assets",
+    "styles": "Global styles",
+    "types": "TypeScript type definitions",
+    "prisma": "Prisma schema and migrations",
+    "__tests__": "Test files"
+  },
+  "development_workflow": {
+    "branch_naming": "feature/fix/chore/docs-description",
+    "commit_message_format": "type(scope): description",
+    "pr_template": true,
+    "code_review_checklist": true
+  }
+} 
