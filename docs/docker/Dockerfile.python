@@ -1,0 +1,74 @@
+FROM python:3.9-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Install PyTorch with CUDA support
+# Note: This is for CUDA 11.8, adjust based on your GPU
+RUN pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu118
+
+# Install Hugging Face libraries
+RUN pip install --no-cache-dir \
+    transformers==4.35.0 \
+    datasets==2.14.5 \
+    accelerate==0.23.0 \
+    peft==0.5.0 \
+    bitsandbytes==0.41.1 \
+    sentencepiece==0.1.99 \
+    protobuf==4.24.4
+
+# Install ONNX and optimization tools
+RUN pip install --no-cache-dir \
+    onnx==1.14.1 \
+    onnxruntime-gpu==1.16.0 \
+    optimum==1.12.0
+
+# Install FastAPI and related packages
+RUN pip install --no-cache-dir \
+    fastapi==0.104.0 \
+    uvicorn==0.23.2 \
+    pydantic==2.4.2 \
+    python-multipart==0.0.6
+
+# Install vector database clients
+RUN pip install --no-cache-dir \
+    pinecone-client==2.2.4 \
+    faiss-gpu==1.7.2 \
+    psycopg2-binary==2.9.9
+
+# Install testing and development tools
+RUN pip install --no-cache-dir \
+    pytest==7.4.0 \
+    pytest-cov==4.1.0 \
+    pytest-benchmark==4.0.0 \
+    pytest-mock==3.11.1 \
+    black==23.10.0 \
+    pylint==2.17.0 \
+    mypy==1.5.0 \
+    pre-commit==3.5.0
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install any additional requirements
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Python code
+COPY python/ ./python/
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Expose port for FastAPI
+EXPOSE 8000
+
+# Command to run the API server
+CMD ["uvicorn", "python.api.main:app", "--host", "0.0.0.0", "--port", "8000"] 

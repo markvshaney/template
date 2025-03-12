@@ -1,0 +1,32 @@
+[run]
+source = python
+omit =
+    */tests/*
+    */__pycache__/*
+    */.venv/*
+    */venv/*
+    */node_modules/*
+    */site-packages/*
+    */.eggs/*
+    */migrations/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    raise ImportError
+    except ImportError
+    raise ValueError
+    warnings.warn
+    if TYPE_CHECKING:
+    @abstractmethod
+    @abc.abstractmethod
+    class .*\bProtocol\):
+    if 0:
+    if False:
+
+[html]
+directory = htmlcov 
