@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 // Intentional ESLint errors:
 // - Unused variable
@@ -18,9 +18,7 @@ const badlyFormattedObject = {
 };
 
 // Intentional TypeScript errors:
-const untypedFunction = (param: string) => {
-  return param.length;
-};
+const stringLength: number = 'this should be a number'; // Clear type error
 
 // Intentional React Hook errors:
 const TestComponent = () => {

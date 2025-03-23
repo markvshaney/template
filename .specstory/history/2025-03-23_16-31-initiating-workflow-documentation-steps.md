@@ -6901,6 +6901,122 @@ Would you like me to:
 
 ---
 
+_**User**_
+
+is this already set up: Run full TypeScript type checking
+
+---
+
+_**Assistant**_
+
+Let me check our current lint-staged configuration to see if TypeScript type checking is included:
+
+---
+
+_****_
+
+Read file: undefined
+
+---
+
+_****_
+
+No, TypeScript type checking is not currently set up in our pre-commit hook. Our current setup only runs ESLint and Prettier. Let's add TypeScript type checking:
+
+---
+
+_****_
+
+```diff
+  module.exports = {
+-   '*.{js,jsx,ts,tsx}': ['eslint --fix', 'prettier --write'],
+-   '*.{json,md}': ['prettier --write'],
++   '*.{js,jsx,ts,tsx}': [
++     'eslint --fix',
++     'prettier --write',
++     () => 'tsc --noEmit' // Run TypeScript compiler in type-check mode
++   ],
++   '*.{json,md}': [
++     'prettier --write'
++   ]
+  };
+  
+```
+
+---
+
+_****_
+
+Now let's test if it works by trying to commit our test file with type errors:
+
+---
+
+_****_
+
+```bash
+git add . && git commit -m "test: verify typescript type checking in pre-commit hook"
+```
+
+```
+PS C:\Users\lbhei\template-1> git add . && git commit -m "test: verify typescript type checking in pre-commit hook"
+warning: in the working copy of '.lintstagedrc.js', LF will be replaced by CRLF the next time Git touches it
+Auto packing the repository in background for optimum performance.
+See "git help gc" for manual housekeeping.
+Enumerating objects: 6, done.
+Delta compression using up to 32 threads
+Compressing objects: 100% (5/5), done.
+Writing objects: 100% (6/6), done.
+Total 6 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+warning: There are too many unreachable loose objects; run 'git prune' to remove them.
+[main e960cc0] test: verify typescript type checking in pre-commit hook
+ 2 files changed, 1452 insertions(+), 979 deletions(-)
+PS C:\Users\lbhei\template-1>
+```
+
+---
+
+_****_
+
+It seems the commit went through, which means we need to make one more adjustment to ensure TypeScript type checking is working properly. Let's modify the configuration to run TypeScript check on all files, not just staged ones:
+
+---
+
+_****_
+
+```diff
+      'eslint --fix',
+      'prettier --write',
+-     () => 'tsc --noEmit', // Run TypeScript compiler in type-check mode
++     'bash -c "tsc --noEmit"' // Run TypeScript compiler on all files
+    ],
+-   '*.{json,md}': ['prettier --write'],
++   '*.{json,md}': [
++     'prettier --write'
++   ]
+  };
+  
+```
+
+---
+
+_****_
+
+Let's also make sure our test file has a clear type error to verify the check:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
 
 
 ---
