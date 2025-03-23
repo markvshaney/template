@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// Core Models
+
+model User {
+    id        String    @id @default(cuid())
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    email     String    @unique
+    name      String?
+    sessions  Session[]
+    memories  Memory[]
+}
+
+model Session {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    userId    String
+    user      User     @relation(fields: [userId], references: [id])
+    memories  Memory[]
+}
+
+model Memory {
+    id            String                      @id @default(cuid())
+    createdAt     DateTime                    @default(now())
+    updatedAt     DateTime                    @updatedAt
+    content       String                      @db.Text
+    type          String // factual, procedural, social, episodic
+    importance    Float                       @default(0)
+    userId        String
+    user          User                        @relation(fields: [userId], references: [id])
+    sessionId     String
+    session       Session                     @relation(fields: [sessionId], references: [id])
+    embedding     Unsupported("vector(1536)") // Vector embedding with 1536 dimensions (for Mistral embeddings)
+    keywords      String[] // For hybrid search
+    metadata      Json // Additional metadata
+    consolidation MemoryConsolidation?
+}
+
+model MemoryConsolidation {
+    id           String   @id @default(cuid())
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    memoryId     String   @unique
+    memory       Memory   @relation(fields: [memoryId], references: [id])
+    importance   Float    @default(0)
+    lastReviewed DateTime @default(now())
+    reviewCount  Int      @default(0)
+    metadata     Json // Consolidation-specific metadata
+}
+
+model Specialization {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    name      String   @unique
+    type      String // factual, procedural, social, episodic
+    version   String
+    active    Boolean  @default(false)
+    metadata  Json // Specialization-specific metadata
+}
+
+// Vector Operations Extension
+/// @postgres-vector
+model VectorIndex {
+    id        String                      @id @default(cuid())
+    createdAt DateTime                    @default(now())
+    updatedAt DateTime                    @updatedAt
+    embedding Unsupported("vector(1536)") // Vector embedding with 1536 dimensions
+    metadata  Json
+}

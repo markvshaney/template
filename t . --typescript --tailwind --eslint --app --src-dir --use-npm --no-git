@@ -1,0 +1,13 @@
+[33mcommit 8d438d55aaa6c17daa81af29a8352eea3e4232b9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Your Name <your.email@example.com>
+Commit: Your Name <your.email@example.com>
+
+    docs(cursorrules): enhance documentation structure and content
+    
+    - Update index.md with comprehensive project structure and tech stack
+    
+    - Update README.md with clear purpose and usage guidelines
+    
+    - Add architecture.md with detailed system design
+    
+    - Add workflow.md with development processes and standards
