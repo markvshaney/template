@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 // PrismaClient is attached to the `global` object in development to prevent
 // exhausting your database connection limit.
@@ -7,13 +7,13 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 // Memory Types
-export type MemoryType = "factual" | "procedural" | "social" | "episodic";
+export type MemoryType = 'factual' | 'procedural' | 'social' | 'episodic';
 
 // Memory Creation Interface
 export interface CreateMemoryInput {
@@ -53,7 +53,7 @@ export async function getMemoriesByUserId(userId: string) {
       consolidation: true,
     },
     orderBy: {
-      updatedAt: "desc",
+      updatedAt: 'desc',
     },
   });
 }
@@ -65,7 +65,7 @@ export async function getMemoriesByType(userId: string, type: MemoryType) {
       consolidation: true,
     },
     orderBy: {
-      importance: "desc",
+      importance: 'desc',
     },
   });
 }
@@ -137,7 +137,7 @@ export async function activateSpecialization(id: string) {
   });
 
   if (!specialization) {
-    throw new Error("Specialization not found");
+    throw new Error('Specialization not found');
   }
 
   await prisma.specialization.updateMany({
@@ -173,7 +173,7 @@ export async function createVectorIndex(embedding: number[], metadata: Record<st
 
 // Cleanup function for tests
 export async function cleanupDatabase() {
-  if (process.env.NODE_ENV === "test") {
+  if (process.env.NODE_ENV === 'test') {
     await prisma.memoryConsolidation.deleteMany();
     await prisma.memory.deleteMany();
     await prisma.session.deleteMany();
@@ -181,4 +181,4 @@ export async function cleanupDatabase() {
     await prisma.specialization.deleteMany();
     await prisma.vectorIndex.deleteMany();
   }
-} 
+}

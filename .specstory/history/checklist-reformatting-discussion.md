@@ -4,8 +4,7 @@
 
 _**User**_
 
-reformat checklist:  eliminate effort estimate paralle
-
+reformat checklist: eliminate effort estimate paralle
 
 ---
 
@@ -15,31 +14,24 @@ I'll reformat the checklist by eliminating the effort estimate sections from eac
 
 ---
 
-_****_
+_\*\*\*\*_
 
 Read file: undefined
 
 ---
 
-_****_
+_\*\*\*\*_
 
 Now I'll create a new version of the checklist with the effort estimate sections removed. I'll edit the file:
 
 ---
 
-_****_
-
-
+_\*\*\*\*_
 
 ---
 
-_****_
-
-
+_\*\*\*\*_
 
 ---
 
-
-
 ---
-

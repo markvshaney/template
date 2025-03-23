@@ -22,18 +22,21 @@ The `.cursorrules` directory contains documentation and configuration files that
 ## Key Features
 
 ### AI Memory System
+
 - Dual-memory architecture (Neocortical and Hippocampal systems)
 - Multiple memory specializations with LoRA adapters
 - Vector storage integration for fast learning
 - Memory management and consolidation
 
 ### Development Standards
+
 - TypeScript-first development
 - Comprehensive testing strategy
 - Code quality enforcement
 - Documentation requirements
 
 ### Integration Points
+
 - Python-JavaScript bridge for model operations
 - Database integration with Prisma
 - Vector storage with Supabase
@@ -42,11 +45,13 @@ The `.cursorrules` directory contains documentation and configuration files that
 ## How to Use
 
 1. **For Developers**
+
    - Review these files to understand project standards and patterns
    - Follow the workflow described in `workflow.md`
    - Use the checklist in `checklist.md` for implementation steps
 
 2. **For AI Tools**
+
    - These files provide context for AI-assisted development
    - Use `dev_context.json` for machine-readable project state
    - Follow the guidelines for consistent code generation
@@ -78,4 +83,4 @@ When making significant changes to the project structure or standards:
 - **checklist.md**: Project implementation steps and progress
 - **tech_stack.json**: Detailed technical stack information
 - **workflow.md**: Detailed workflow instructions
-- **CODE_QUALITY.md**: Comprehensive code quality guidelines 
+- **CODE_QUALITY.md**: Comprehensive code quality guidelines

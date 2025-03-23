@@ -36,7 +36,7 @@ from pylint.interfaces import IAstroidChecker
 
 class TorchChecker(BaseChecker):
     __implements__ = IAstroidChecker
-    
+
     name = 'torch'
     priority = -1
     msgs = {
@@ -51,7 +51,7 @@ class TorchChecker(BaseChecker):
             'Tensors should be moved to CPU before returning from API functions'
         ),
     }
-    
+
     def visit_functiondef(self, node):
         # Implementation of checks
         pass
@@ -118,25 +118,25 @@ We use pre-commit to run linters and formatters before each commit:
 ```yaml
 # .pre-commit-config.yaml
 repos:
--   repo: https://github.com/pycqa/isort
+  - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
-    -   id: isort
-        args: ["--profile", "black", "--filter-files"]
--   repo: https://github.com/psf/black
+      - id: isort
+        args: ['--profile', 'black', '--filter-files']
+  - repo: https://github.com/psf/black
     rev: 23.10.0
     hooks:
-    -   id: black
+      - id: black
         language_version: python3.9
--   repo: https://github.com/pycqa/pylint
+  - repo: https://github.com/pycqa/pylint
     rev: v2.17.0
     hooks:
-    -   id: pylint
+      - id: pylint
         additional_dependencies: [pylint-plugins]
--   repo: https://github.com/pre-commit/mirrors-mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.5.0
     hooks:
-    -   id: mypy
+      - id: mypy
         additional_dependencies: [types-requests, types-PyYAML]
 ```
 
@@ -148,14 +148,14 @@ We follow Google-style docstrings:
 def embed_text(text: str, model_name: str = "all-MiniLM-L6-v2") -> np.ndarray:
     """
     Generate embedding vector for input text.
-    
+
     Args:
         text: Input text to embed
         model_name: Name of the embedding model to use
-        
+
     Returns:
         numpy.ndarray: Embedding vector
-        
+
     Raises:
         ValueError: If text is empty or model_name is not supported
     """
@@ -273,32 +273,32 @@ name: Python Linting
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-    - name: Check formatting with black
-      run: |
-        black --check python/
-    - name: Lint with pylint
-      run: |
-        pylint python/
-    - name: Type check with mypy
-      run: |
-        mypy python/
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Check formatting with black
+        run: |
+          black --check python/
+      - name: Lint with pylint
+        run: |
+          pylint python/
+      - name: Type check with mypy
+        run: |
+          mypy python/
 ```
 
 ## VS Code Integration
@@ -308,14 +308,9 @@ jobs:
 {
   "python.linting.enabled": true,
   "python.linting.pylintEnabled": true,
-  "python.linting.pylintArgs": [
-    "--rcfile=.pylintrc"
-  ],
+  "python.linting.pylintArgs": ["--rcfile=.pylintrc"],
   "python.formatting.provider": "black",
-  "python.formatting.blackArgs": [
-    "--line-length",
-    "100"
-  ],
+  "python.formatting.blackArgs": ["--line-length", "100"],
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
@@ -333,4 +328,4 @@ jobs:
 5. **Error Handling**: Use specific exceptions and provide helpful error messages
 6. **Testing**: Ensure all code has corresponding tests
 7. **Documentation**: Document all public APIs with proper docstrings
-8. **Type Hints**: Use type hints consistently throughout the codebase 
+8. **Type Hints**: Use type hints consistently throughout the codebase

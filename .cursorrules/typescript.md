@@ -51,11 +51,11 @@ Example:
 // types/ai.ts
 export interface ModelConfig {
   modelName: string;
-  quantization: "8bit" | "16bit" | "32bit";
+  quantization: '8bit' | '16bit' | '32bit';
   useGPU: boolean;
 }
 
-export type ModelStatus = "loading" | "ready" | "error";
+export type ModelStatus = 'loading' | 'ready' | 'error';
 
 // types/index.ts
 export * from './ai';
@@ -92,12 +92,7 @@ const user = data as User;
 
 // Better
 function isUser(data: unknown): data is User {
-  return (
-    typeof data === 'object' && 
-    data !== null && 
-    'id' in data && 
-    'name' in data
-  );
+  return typeof data === 'object' && data !== null && 'id' in data && 'name' in data;
 }
 
 if (isUser(data)) {
@@ -144,7 +139,7 @@ async function fetchUserData(userId: string): Promise<User> {
     if (!response.ok) {
       throw new Error(`Failed to fetch user: ${response.statusText}`);
     }
-    return await response.json() as User;
+    return (await response.json()) as User;
   } catch (error) {
     console.error('Error fetching user data:', error);
     throw error;
@@ -184,23 +179,23 @@ export interface MemoryEntry {
 - Include parameter descriptions, return types, and examples
 - Document complex logic with inline comments
 
-```typescript
+````typescript
 /**
  * Generates an embedding vector for the given text using the specified model
- * 
+ *
  * @param text - The text to generate an embedding for
  * @param model - The embedding model to use (defaults to 'all-MiniLM-L6-v2')
  * @returns A promise that resolves to an embedding vector
- * 
+ *
  * @example
  * ```ts
  * const embedding = await generateEmbedding('Hello world');
  * ```
  */
 async function generateEmbedding(
-  text: string, 
+  text: string,
   model: string = 'all-MiniLM-L6-v2'
 ): Promise<EmbeddingVector> {
   // Implementation
 }
-``` 
+````

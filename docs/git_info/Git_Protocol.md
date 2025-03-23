@@ -20,6 +20,7 @@ This document outlines the standardized Git workflow for the project. Following 
 ## Workflow for Completing a Step
 
 1. **Create a Feature Branch**
+
    ```bash
    git checkout develop
    git pull origin develop
@@ -27,28 +28,34 @@ This document outlines the standardized Git workflow for the project. Following 
    ```
 
 2. **Make Regular Commits**
+
    - Commit frequently with meaningful messages
    - Follow the conventional commit format (see below)
    - Keep commits focused on specific changes
 
 3. **Push Changes to Remote**
+
    ```bash
    git push origin feature/step-X-[component-name]
    ```
 
 4. **Create a Pull Request**
+
    - Create a PR from your feature branch to develop
    - Fill out the PR template with details about the changes
    - Request reviews from appropriate team members
 
 5. **Address Review Feedback**
+
    - Make requested changes
    - Push additional commits to the feature branch
    - Respond to comments
 
 6. **Merge to Develop**
+
    - Squash commits when merging to maintain a clean history
    - Use a descriptive merge commit message
+
    ```bash
    git checkout develop
    git merge --squash feature/step-X-[component-name]
@@ -102,6 +109,7 @@ test(utils): add unit tests for string helpers
 ## Handling Merge Conflicts
 
 1. **Pull Latest Changes**
+
    ```bash
    git checkout develop
    git pull origin develop
@@ -110,6 +118,7 @@ test(utils): add unit tests for string helpers
    ```
 
 2. **Resolve Conflicts**
+
    - Open conflicted files and resolve the conflicts
    - Use visual diff tools if available
 
@@ -139,17 +148,20 @@ test(utils): add unit tests for string helpers
 ## Tagging Releases
 
 1. **Create a Release Branch**
+
    ```bash
    git checkout develop
    git checkout -b release/v1.x.x
    ```
 
 2. **Finalize Release Changes**
+
    - Update version numbers
    - Update CHANGELOG.md
    - Make any final adjustments
 
 3. **Merge to Main and Tag**
+
    ```bash
    git checkout main
    git merge release/v1.x.x
@@ -187,20 +199,25 @@ The project uses Husky for Git hooks:
 ## Best Practices
 
 1. **Keep Branches Short-lived**
+
    - Complete and merge feature branches promptly
    - Avoid long-running feature branches
 
 2. **Rebase vs. Merge**
+
    - Use rebase for incorporating changes from develop into your feature branch
    - Use merge (with squash) when completing a feature
 
 3. **Clean History**
+
    - Use interactive rebase to clean up commits before PR
+
    ```bash
    git rebase -i HEAD~[number of commits]
    ```
 
 4. **Protect Sensitive Information**
+
    - Never commit secrets, credentials, or sensitive data
    - Use environment variables and .gitignore
 
@@ -208,4 +225,4 @@ The project uses Husky for Git hooks:
    - Include detailed descriptions in PR
    - Update documentation as needed
 
-By following this Git protocol consistently, we maintain a clean, organized repository that facilitates collaboration and makes it easier to track changes over time. 
+By following this Git protocol consistently, we maintain a clean, organized repository that facilitates collaboration and makes it easier to track changes over time.

@@ -28,7 +28,7 @@ export async function generateText(
       top_p: params.topP,
       max_tokens: params.maxTokens,
     });
-    
+
     return response.response;
   } catch (error) {
     console.error('Error generating text:', error);
@@ -50,21 +50,19 @@ When loading models, follow these guidelines:
 import * as tf from '@tensorflow/tfjs';
 import * as ort from 'onnxruntime-web';
 
-export async function loadModel(
-  modelConfig: ModelConfig
-): Promise<Model> {
+export async function loadModel(modelConfig: ModelConfig): Promise<Model> {
   // Check for GPU availability
   const gpu = await tf.ready();
   const useGPU = modelConfig.useGPU && gpu.getBackend() === 'webgl';
-  
+
   // Apply quantization if specified
   const quantizationOptions = getQuantizationOptions(modelConfig.quantization);
-  
+
   // Load the model with appropriate options
   const model = await tf.loadGraphModel(modelConfig.modelPath, {
     quantizationOptions,
   });
-  
+
   return {
     model,
     config: {
@@ -94,12 +92,12 @@ export async function generateEmbedding(
   if (!embeddingPipeline) {
     embeddingPipeline = await pipeline('feature-extraction', modelName);
   }
-  
+
   const result = await embeddingPipeline(text, {
     pooling: 'mean',
     normalize: true,
   });
-  
+
   return {
     dimensions: result.data.length,
     values: Array.from(result.data),
@@ -125,16 +123,18 @@ export async function storeEmbedding(
   metadata: Record<string, any> = {}
 ): Promise<void> {
   const index = pinecone.index(process.env.PINECONE_INDEX);
-  
-  await index.upsert([{
-    id,
-    values: embedding.values,
-    metadata: {
-      content,
-      timestamp: new Date().toISOString(),
-      ...metadata,
+
+  await index.upsert([
+    {
+      id,
+      values: embedding.values,
+      metadata: {
+        content,
+        timestamp: new Date().toISOString(),
+        ...metadata,
+      },
     },
-  }]);
+  ]);
 }
 
 export async function searchSimilar(
@@ -142,14 +142,14 @@ export async function searchSimilar(
   limit: number = 5
 ): Promise<Array<{ id: string; score: number; metadata: Record<string, any> }>> {
   const index = pinecone.index(process.env.PINECONE_INDEX);
-  
+
   const results = await index.query({
     vector: embedding.values,
     topK: limit,
     includeMetadata: true,
   });
-  
-  return results.matches.map(match => ({
+
+  return results.matches.map((match) => ({
     id: match.id,
     score: match.score,
     metadata: match.metadata,
@@ -166,20 +166,20 @@ The neocortical system is based on fine-tuned models:
 ```typescript
 export class NeocorticalMemory {
   private model: Model;
-  
+
   constructor(modelConfig: ModelConfig) {
     this.initializeModel(modelConfig);
   }
-  
+
   private async initializeModel(modelConfig: ModelConfig): Promise<void> {
     this.model = await loadModel(modelConfig);
   }
-  
+
   async recall(query: string): Promise<string> {
     // Use the model to generate a response based on learned patterns
     return generateText(query, this.model.config.modelName);
   }
-  
+
   async learn(data: Array<{ input: string; output: string }>): Promise<void> {
     // Implement fine-tuning logic here
     // This is a simplified example
@@ -198,17 +198,17 @@ export class HippocampalMemory {
   async store(content: string, metadata: Record<string, any> = {}): Promise<string> {
     const id = generateUniqueId();
     const embedding = await generateEmbedding(content);
-    
+
     await storeEmbedding(id, content, embedding, metadata);
-    
+
     return id;
   }
-  
+
   async recall(query: string, limit: number = 5): Promise<Array<MemoryEntry>> {
     const queryEmbedding = await generateEmbedding(query);
     const results = await searchSimilar(queryEmbedding, limit);
-    
-    return results.map(result => ({
+
+    return results.map((result) => ({
       id: result.id,
       content: result.metadata.content,
       embedding: {
@@ -219,26 +219,21 @@ export class HippocampalMemory {
       importance: result.score,
     }));
   }
-  
-  async generateWithContext(
-    query: string,
-    modelName: string = 'mistral'
-  ): Promise<string> {
+
+  async generateWithContext(query: string, modelName: string = 'mistral'): Promise<string> {
     // Retrieve relevant memories
     const memories = await this.recall(query);
-    
+
     // Format context from memories
-    const context = memories
-      .map(memory => memory.content)
-      .join('\n\n');
-    
+    const context = memories.map((memory) => memory.content).join('\n\n');
+
     // Generate response with context
     const prompt = `Context information:
 ${context}
 
 Based on the above context, please answer the following:
 ${query}`;
-    
+
     return generateText(prompt, modelName);
   }
 }
@@ -252,16 +247,16 @@ Integrate both memory systems:
 export class IntegratedMemory {
   private neocortical: NeocorticalMemory;
   private hippocampal: HippocampalMemory;
-  
+
   constructor(modelConfig: ModelConfig) {
     this.neocortical = new NeocorticalMemory(modelConfig);
     this.hippocampal = new HippocampalMemory();
   }
-  
+
   async recall(query: string): Promise<string> {
     // Get memories from hippocampal system
     const episodicMemories = await this.hippocampal.recall(query);
-    
+
     if (episodicMemories.length > 0) {
       // If we have relevant episodic memories, use RAG
       return this.hippocampal.generateWithContext(query);
@@ -270,11 +265,11 @@ export class IntegratedMemory {
       return this.neocortical.recall(query);
     }
   }
-  
+
   async learn(content: string): Promise<void> {
     // Store in hippocampal memory immediately
     await this.hippocampal.store(content);
-    
+
     // Collect data for eventual neocortical learning
     // This would be part of a consolidation process
   }
@@ -316,25 +311,22 @@ describe('Embedding Generation', () => {
   it('should generate embeddings with the correct dimensions', async () => {
     const text = 'This is a test sentence';
     const embedding = await generateEmbedding(text);
-    
+
     expect(embedding).toBeDefined();
     expect(embedding.dimensions).toBe(384); // For all-MiniLM-L6-v2
     expect(embedding.values.length).toBe(embedding.dimensions);
   });
-  
+
   it('should generate similar embeddings for similar texts', async () => {
     const text1 = 'The cat sat on the mat';
     const text2 = 'A cat was sitting on a mat';
-    
+
     const embedding1 = await generateEmbedding(text1);
     const embedding2 = await generateEmbedding(text2);
-    
-    const similarity = calculateCosineSimilarity(
-      embedding1.values,
-      embedding2.values
-    );
-    
+
+    const similarity = calculateCosineSimilarity(embedding1.values, embedding2.values);
+
     expect(similarity).toBeGreaterThan(0.8); // High similarity expected
   });
 });
-``` 
+```

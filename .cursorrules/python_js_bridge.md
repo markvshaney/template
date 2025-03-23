@@ -5,6 +5,7 @@ This document outlines best practices for integrating Python (PyTorch) and JavaS
 ## Architecture Overview
 
 The project uses a hybrid architecture with:
+
 - **Frontend**: Next.js with TypeScript
 - **AI Components**: Python with PyTorch
 - **Bridge**: FastAPI for Python services with JavaScript clients
@@ -75,12 +76,12 @@ async def generate_text(request: GenerationRequest):
         # Model inference code
         start_time = time.time()
         output = model.generate(
-            request.prompt, 
+            request.prompt,
             max_length=request.max_length,
             temperature=request.temperature
         )
         generation_time = time.time() - start_time
-        
+
         return GenerationResponse(
             text=output,
             tokens_generated=len(output.split()),
@@ -108,25 +109,25 @@ export interface GenerationResponse {
 
 export class PythonClient {
   private baseUrl: string;
-  
-  constructor(baseUrl: string = "http://localhost:8000") {
+
+  constructor(baseUrl: string = 'http://localhost:8000') {
     this.baseUrl = baseUrl;
   }
-  
+
   async generateText(request: GenerationRequest): Promise<GenerationResponse> {
     const response = await fetch(`${this.baseUrl}/generate`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(request),
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(`API error: ${error.detail}`);
     }
-    
+
     return response.json();
   }
 }
@@ -135,11 +136,13 @@ export class PythonClient {
 ## Development Workflow
 
 1. **Local Development**:
+
    - Run FastAPI server: `cd python && uvicorn api.main:app --reload`
    - Run Next.js app: `npm run dev`
    - Both can be started together with `npm run dev:all`
 
 2. **Testing**:
+
    - Test Python components: `cd python && pytest`
    - Test TypeScript client: `npm test lib/python-client`
    - Integration tests: `npm test integration`
@@ -167,4 +170,4 @@ export class PythonClient {
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [PyTorch Serving Best Practices](https://pytorch.org/tutorials/intermediate/flask_rest_api_tutorial.html)
-- [TypeScript Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) 
+- [TypeScript Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)

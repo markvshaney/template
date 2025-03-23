@@ -71,7 +71,7 @@ model Memory {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionId   String?
   session     Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
-  
+
   @@index([userId])
   @@index([sessionId])
 }
@@ -104,33 +104,33 @@ export class MemoryRepository {
       data,
     });
   }
-  
+
   async findById(id: string): Promise<Memory | null> {
     return prisma.memory.findUnique({
       where: { id },
     });
   }
-  
+
   async findByUserId(userId: string): Promise<Memory[]> {
     return prisma.memory.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
   }
-  
+
   async update(id: string, data: Prisma.MemoryUpdateInput): Promise<Memory> {
     return prisma.memory.update({
       where: { id },
       data,
     });
   }
-  
+
   async delete(id: string): Promise<Memory> {
     return prisma.memory.delete({
       where: { id },
     });
   }
-  
+
   async findSimilar(embedding: number[], limit: number = 5): Promise<Memory[]> {
     // Using pgvector for similarity search
     return prisma.$queryRaw`
@@ -148,7 +148,10 @@ export class MemoryRepository {
 Use transactions for operations that modify multiple records:
 
 ```typescript
-async function createUserWithSession(email: string, name: string): Promise<{ user: User; session: Session }> {
+async function createUserWithSession(
+  email: string,
+  name: string
+): Promise<{ user: User; session: Session }> {
   return prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
@@ -156,14 +159,14 @@ async function createUserWithSession(email: string, name: string): Promise<{ use
         name,
       },
     });
-    
+
     const session = await tx.session.create({
       data: {
         userId: user.id,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       },
     });
-    
+
     return { user, session };
   });
 }
@@ -197,7 +200,7 @@ export async function storeMemoryWithEmbedding(
     )
     RETURNING id
   `;
-  
+
   return result[0].id;
 }
 
@@ -213,7 +216,7 @@ export async function findSimilarMemories(
     ORDER BY embedding <=> ${embedding.values}::vector
     LIMIT ${limit}
   `;
-  
+
   return results;
 }
 ```
@@ -331,7 +334,7 @@ import { prisma } from '../../lib/db';
 describe('MemoryRepository', () => {
   const repository = new MemoryRepository();
   let userId: string;
-  
+
   beforeEach(async () => {
     // Create a test user
     const user = await prisma.user.create({
@@ -342,25 +345,25 @@ describe('MemoryRepository', () => {
     });
     userId = user.id;
   });
-  
+
   it('should create a memory', async () => {
     const memory = await repository.create({
       content: 'Test memory',
       userId,
     });
-    
+
     expect(memory).toBeDefined();
     expect(memory.content).toBe('Test memory');
     expect(memory.userId).toBe(userId);
   });
-  
+
   it('should find memories by user ID', async () => {
     // Create test memories
     await repository.create({ content: 'Memory 1', userId });
     await repository.create({ content: 'Memory 2', userId });
-    
+
     const memories = await repository.findByUserId(userId);
-    
+
     expect(memories).toHaveLength(2);
     expect(memories[0].content).toBe('Memory 2'); // Most recent first
     expect(memories[1].content).toBe('Memory 1');
@@ -390,7 +393,7 @@ async function safeDbOperation<T>(operation: () => Promise<T>): Promise<[T | nul
 }
 
 // Usage
-const [user, error] = await safeDbOperation(() => 
+const [user, error] = await safeDbOperation(() =>
   prisma.user.findUnique({ where: { id: userId } })
 );
 
@@ -399,4 +402,4 @@ if (error) {
 } else {
   // Use user data
 }
-``` 
+```

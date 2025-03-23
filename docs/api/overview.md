@@ -27,6 +27,7 @@ To obtain a token, use the `/auth/token` endpoint.
 Obtain a JWT token for authentication.
 
 **Request:**
+
 ```json
 {
   "username": "user@example.com",
@@ -35,6 +36,7 @@ Obtain a JWT token for authentication.
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -50,6 +52,7 @@ Obtain a JWT token for authentication.
 Send a query to the AI model.
 
 **Request:**
+
 ```json
 {
   "query": "What is the capital of France?",
@@ -63,6 +66,7 @@ Send a query to the AI model.
 ```
 
 **Response:**
+
 ```json
 {
   "response": "The capital of France is Paris.",
@@ -78,6 +82,7 @@ Send a query to the AI model.
 Get the current status of the AI model.
 
 **Response:**
+
 ```json
 {
   "status": "ready",
@@ -95,6 +100,7 @@ Get the current status of the AI model.
 Change the active specialization.
 
 **Request:**
+
 ```json
 {
   "specialization": "social"
@@ -102,6 +108,7 @@ Change the active specialization.
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -118,6 +125,7 @@ Change the active specialization.
 Store information in memory.
 
 **Request:**
+
 ```json
 {
   "content": "Paris is the capital of France.",
@@ -130,6 +138,7 @@ Store information in memory.
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -144,6 +153,7 @@ Store information in memory.
 Retrieve information from memory.
 
 **Request:**
+
 ```json
 {
   "query": "capital of France",
@@ -153,6 +163,7 @@ Retrieve information from memory.
 ```
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -185,6 +196,7 @@ Retrieve information from memory.
 Calculate importance score for a memory.
 
 **Request:**
+
 ```json
 {
   "memory_id": "mem_123456",
@@ -193,6 +205,7 @@ Calculate importance score for a memory.
 ```
 
 **Response:**
+
 ```json
 {
   "memory_id": "mem_123456",
@@ -210,6 +223,7 @@ Connect to `/ws` for real-time communication.
 #### Events
 
 **Client to Server:**
+
 ```json
 {
   "type": "query",
@@ -223,6 +237,7 @@ Connect to `/ws` for real-time communication.
 ```
 
 **Server to Client (streaming response):**
+
 ```json
 {
   "type": "response_chunk",
@@ -301,4 +316,4 @@ from myproject_sdk import Client
 client = Client(api_key="your_api_key")
 response = client.model.query("What is the capital of France?")
 print(response.text)  # "The capital of France is Paris."
-``` 
+```

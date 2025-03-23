@@ -98,10 +98,10 @@ describe('generateEmbedding', () => {
         }),
       }),
     }));
-    
+
     const text = 'This is a test sentence';
     const embedding = await generateEmbedding(text);
-    
+
     expect(embedding).toBeDefined();
     expect(embedding.dimensions).toBe(384);
     expect(embedding.values.length).toBe(384);
@@ -121,14 +121,14 @@ describe('Button', () => {
     render(<Button>Click me</Button>);
     expect(screen.getByRole('button')).toHaveTextContent('Click me');
   });
-  
+
   it('calls onClick when clicked', () => {
     const handleClick = jest.fn();
     render(<Button onClick={handleClick}>Click me</Button>);
     fireEvent.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
-  
+
   it('can be disabled', () => {
     render(<Button disabled>Click me</Button>);
     expect(screen.getByRole('button')).toBeDisabled();
@@ -215,30 +215,20 @@ import { generateUser, generateMemory } from './test-data';
 export const handlers = [
   rest.get('/api/user/:id', (req, res, ctx) => {
     const { id } = req.params;
-    return res(
-      ctx.status(200),
-      ctx.json(generateUser({ id }))
-    );
+    return res(ctx.status(200), ctx.json(generateUser({ id })));
   }),
-  
+
   rest.get('/api/memories', (req, res, ctx) => {
     const userId = req.url.searchParams.get('userId');
     return res(
       ctx.status(200),
-      ctx.json([
-        generateMemory({ userId }),
-        generateMemory({ userId }),
-        generateMemory({ userId }),
-      ])
+      ctx.json([generateMemory({ userId }), generateMemory({ userId }), generateMemory({ userId })])
     );
   }),
-  
+
   rest.post('/api/memory', async (req, res, ctx) => {
     const { content, userId } = await req.json();
-    return res(
-      ctx.status(201),
-      ctx.json(generateMemory({ content, userId }))
-    );
+    return res(ctx.status(201), ctx.json(generateMemory({ content, userId })));
   }),
 ];
 ```
@@ -255,7 +245,7 @@ import { generateUser, generateMemory } from '@/test-utils/test-data';
 
 describe('Memory Management Integration', () => {
   const user = generateUser();
-  
+
   it('loads and displays user memories', async () => {
     // Setup mock response
     server.use(
@@ -269,27 +259,27 @@ describe('Memory Management Integration', () => {
         );
       })
     );
-    
+
     render(<MemoryManager userId={user.id} />);
-    
+
     // Wait for memories to load
     await waitFor(() => {
       expect(screen.getByText('First memory')).toBeInTheDocument();
       expect(screen.getByText('Second memory')).toBeInTheDocument();
     });
   });
-  
+
   it('creates a new memory', async () => {
     render(<MemoryManager userId={user.id} />);
-    
+
     // Fill the form
     fireEvent.change(screen.getByLabelText(/memory content/i), {
       target: { value: 'New test memory' },
     });
-    
+
     // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    
+
     // Wait for success message
     await waitFor(() => {
       expect(screen.getByText(/memory saved/i)).toBeInTheDocument();
@@ -329,7 +319,7 @@ describe('Memory Management Flow', () => {
       statusCode: 200,
       body: { success: true },
     }).as('login');
-    
+
     cy.visit('/login');
     cy.get('input[name="email"]').type('test@example.com');
     cy.get('input[name="password"]').type('password123');
@@ -337,30 +327,30 @@ describe('Memory Management Flow', () => {
     cy.wait('@login');
     cy.url().should('include', '/dashboard');
   });
-  
+
   it('should create and retrieve memories', () => {
     // Intercept memory creation
     cy.intercept('POST', '/api/memory', {
       statusCode: 201,
       body: { id: 'new-memory-id', content: 'Test memory content' },
     }).as('createMemory');
-    
+
     // Navigate to memory page
     cy.visit('/memories');
-    
+
     // Create new memory
     cy.get('button').contains('New Memory').click();
     cy.get('textarea[name="content"]').type('Test memory content');
     cy.get('button[type="submit"]').click();
-    
+
     // Wait for creation and verify
     cy.wait('@createMemory');
     cy.get('.success-message').should('be.visible');
-    
+
     // Verify memory appears in list
     cy.get('.memory-list').should('contain', 'Test memory content');
   });
-  
+
   it('should search for memories', () => {
     // Intercept search request
     cy.intercept('GET', '/api/memories/search*', {
@@ -370,14 +360,14 @@ describe('Memory Management Flow', () => {
         { id: 'memory-2', content: 'Second test memory' },
       ],
     }).as('searchMemories');
-    
+
     // Navigate to memory page
     cy.visit('/memories');
-    
+
     // Search for memories
     cy.get('input[name="search"]').type('test memory');
     cy.get('button').contains('Search').click();
-    
+
     // Wait for search and verify results
     cy.wait('@searchMemories');
     cy.get('.memory-list').should('contain', 'First test memory');
@@ -485,7 +475,7 @@ const mockPipeline = jest.fn().mockImplementation(() => {
         0
       );
       const seed = Math.abs(hash) / 2147483647;
-      
+
       // Generate deterministic vector
       const data = new Float32Array(384);
       for (let i = 0; i < data.length; i++) {
@@ -493,7 +483,7 @@ const mockPipeline = jest.fn().mockImplementation(() => {
         const x = Math.sin(seed * i) * 10000;
         data[i] = x - Math.floor(x) - 0.5;
       }
-      
+
       return Promise.resolve({ data });
     }),
   });
@@ -515,17 +505,17 @@ describe('Vector Operations', () => {
     const v1 = [1, 0, 0];
     const v2 = [0, 1, 0];
     const v3 = [1, 1, 0];
-    
+
     expect(cosineSimilarity(v1, v1)).toBeCloseTo(1);
     expect(cosineSimilarity(v1, v2)).toBeCloseTo(0);
     expect(cosineSimilarity(v1, v3)).toBeCloseTo(0.7071, 4);
   });
-  
+
   it('calculates euclidean distance correctly', () => {
     const v1 = [1, 0, 0];
     const v2 = [0, 1, 0];
     const v3 = [1, 1, 0];
-    
+
     expect(euclideanDistance(v1, v1)).toBeCloseTo(0);
     expect(euclideanDistance(v1, v2)).toBeCloseTo(Math.sqrt(2));
     expect(euclideanDistance(v1, v3)).toBeCloseTo(1);
@@ -543,16 +533,16 @@ import { performance } from 'perf_hooks';
 describe('Model Loading Performance', () => {
   it('loads model within acceptable time', async () => {
     const start = performance.now();
-    
+
     await loadModel({
       modelName: 'test-model',
       quantization: '8bit',
       useGPU: false,
     });
-    
+
     const end = performance.now();
     const loadTime = end - start;
-    
+
     console.log(`Model loaded in ${loadTime}ms`);
     expect(loadTime).toBeLessThan(5000); // 5 seconds max
   }, 10000); // 10 second timeout
@@ -625,7 +615,7 @@ python_classes = Test*
 python_functions = test_*
 
 # Display options
-addopts = 
+addopts =
     --verbose
     --color=yes
     --durations=10
@@ -675,31 +665,31 @@ from models.embedding import EmbeddingModel
 
 class TestEmbeddingModel:
     """Tests for the EmbeddingModel class."""
-    
+
     def test_initialization(self, embedding_model):
         """Test that the model initializes correctly."""
         assert embedding_model.model_name == "sentence-transformers/all-MiniLM-L6-v2"
         assert embedding_model.device in ["cuda", "cpu"]
         assert embedding_model.max_length == 512
-    
+
     def test_encode_single_text(self, embedding_model, sample_texts):
         """Test encoding a single text."""
         text = sample_texts[0]
         embedding = embedding_model.encode(text)
-        
+
         # Check shape and normalization
         assert isinstance(embedding, torch.Tensor)
         assert embedding.dim() == 2
         assert embedding.size(0) == 1
         assert torch.allclose(torch.norm(embedding, dim=1), torch.ones(1), atol=1e-5)
-    
+
     def test_similarity(self, embedding_model, sample_texts):
         """Test similarity calculation between embeddings."""
         embedding1 = embedding_model.encode(sample_texts[0])
         embedding2 = embedding_model.encode(sample_texts[1])
-        
+
         similarity = embedding_model.similarity(embedding1, embedding2)
-        
+
         assert isinstance(similarity, torch.Tensor)
         assert similarity.item() >= -1.0 and similarity.item() <= 1.0
 ```
@@ -714,7 +704,7 @@ from api.main import app
 
 class TestAPI:
     """Tests for the FastAPI application."""
-    
+
     def test_get_status(self, client):
         """Test the status endpoint."""
         response = client.get("/")
@@ -722,7 +712,7 @@ class TestAPI:
         data = response.json()
         assert data["status"] == "running"
         assert "model" in data
-    
+
     def test_create_embedding(self, client):
         """Test the embedding endpoint."""
         response = client.post(
@@ -745,20 +735,20 @@ from models.embedding import EmbeddingModel
 
 class TestEmbeddingPerformance:
     """Performance tests for the EmbeddingModel class."""
-    
+
     def test_encode_performance(self, embedding_model, sample_texts, benchmark):
         """Test the performance of the encode method."""
         # Benchmark the encode method
         benchmark(lambda: embedding_model.encode(sample_texts))
-    
+
     def test_batch_encode_performance(self, embedding_model, large_sample_texts, benchmark):
         """Test the performance of the batch_encode method with different batch sizes."""
         def encode_with_batch_size_8():
             embedding_model.batch_encode(large_sample_texts, batch_size=8)
-        
+
         def encode_with_batch_size_32():
             embedding_model.batch_encode(large_sample_texts, batch_size=32)
-        
+
         # Run the benchmarks
         benchmark.pedantic(encode_with_batch_size_8, rounds=3, iterations=2)
         benchmark.pedantic(encode_with_batch_size_32, rounds=3, iterations=2)
@@ -899,4 +889,4 @@ isort --check python
 7. **Readable Tests**: Write clear, descriptive test names and assertions.
 8. **GPU-Specific Tests**: Use markers to identify tests that require GPU acceleration.
 9. **Performance Benchmarks**: Use pytest-benchmark to track performance over time.
-10. **Continuous Integration**: Run tests automatically on every commit. 
+10. **Continuous Integration**: Run tests automatically on every commit.

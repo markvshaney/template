@@ -63,6 +63,7 @@ project/
 This project uses a modern tech stack including:
 
 ### Frontend
+
 - Next.js 14 with App Router
 - TypeScript for type safety
 - shadcn/ui for component library
@@ -70,11 +71,13 @@ This project uses a modern tech stack including:
 - WebSocket for real-time updates
 
 ### Backend
+
 - Prisma ORM with PostgreSQL
 - Supabase for vector storage
 - WebSocket server for real-time communication
 
 ### AI/ML
+
 - Mistral 7B base model
 - TensorFlow.js/ONNX/transformers.js for model handling
 - LoRA adapters for domain specializations
@@ -82,12 +85,14 @@ This project uses a modern tech stack including:
 - RAG for fast-learning system
 
 ### Testing
+
 - Jest for unit testing
 - React Testing Library for component testing
 - Cypress for E2E testing
 - MSW for API mocking
 
 ### Development Tools
+
 - ESLint for code linting
 - Prettier for code formatting
 - Husky for git hooks
@@ -100,6 +105,7 @@ For complete tech stack details, see the `tech_stack.json` file.
 The system implements a dual-memory architecture:
 
 1. **Neocortical System (Slow Learning)**
+
    - Based on Mistral 7B
    - Handles long-term knowledge
    - Uses sparse activation and 8-bit quantization
@@ -112,9 +118,10 @@ The system implements a dual-memory architecture:
 ## Specialization Framework
 
 The system supports multiple memory specializations:
+
 - Factual Knowledge
 - Procedural Memory
 - Social Interaction Memory
 - Episodic Memory
 
-Each specialization uses LoRA adapters for efficient domain-specific learning. 
+Each specialization uses LoRA adapters for efficient domain-specific learning.

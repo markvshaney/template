@@ -6,7 +6,7 @@ module.exports = {
     'plugin:react-hooks/recommended',
     'plugin:jsx-a11y/recommended',
     'plugin:jest/recommended',
-    'prettier'
+    'prettier',
   ],
   plugins: ['@typescript-eslint', 'react', 'react-hooks', 'jsx-a11y', 'jest', 'prettier'],
   rules: {
@@ -14,7 +14,7 @@ module.exports = {
   },
   settings: {
     react: {
-      version: 'detect'
-    }
-  }
-}; 
+      version: 'detect',
+    },
+  },
+};

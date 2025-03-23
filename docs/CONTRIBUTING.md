@@ -30,13 +30,15 @@ This project adheres to a Code of Conduct that all contributors are expected to 
    cd REPOSITORY-NAME
    ```
 3. **Set up the development environment**:
+
    ```bash
    # For Windows
    .\scripts\setup\setup_env.ps1
-   
+
    # For Unix/Linux/macOS
    ./scripts/setup/setup_env.sh
    ```
+
 4. **Create a new branch** for your feature or bugfix:
    ```bash
    git checkout -b feature/your-feature-name
@@ -107,4 +109,4 @@ For more details, see [.cursorrules/testing.md](.cursorrules/testing.md) and [.c
 - Include relevant environment information
 - Suggest solutions if possible
 
-Thank you for contributing to our project! 
+Thank you for contributing to our project!

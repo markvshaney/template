@@ -84,12 +84,7 @@
     "local_models": {
       "provider": "Ollama",
       "version": "^0.1.14",
-      "supported_models": [
-        "Mistral-7B",
-        "Llama-2",
-        "Phi-2",
-        "Gemma"
-      ],
+      "supported_models": ["Mistral-7B", "Llama-2", "Phi-2", "Gemma"],
       "features": [
         "Local model serving",
         "Model fine-tuning",
@@ -183,11 +178,7 @@
       "python": {
         "framework": "pytest",
         "version": "^7.4.0",
-        "plugins": [
-          "pytest-cov",
-          "pytest-mock",
-          "pytest-benchmark"
-        ],
+        "plugins": ["pytest-cov", "pytest-mock", "pytest-benchmark"],
         "features": [
           "Fixture-based testing",
           "Parameterized tests",
@@ -269,11 +260,7 @@
       "python_hooks": {
         "tool": "pre-commit",
         "version": "^3.5.0",
-        "hooks": [
-          "black",
-          "pylint",
-          "pytest"
-        ]
+        "hooks": ["black", "pylint", "pytest"]
       }
     }
   },
@@ -309,4 +296,4 @@
       ]
     }
   }
-} 
+}

@@ -40,6 +40,7 @@ cd <project-directory>
 ```
 
 This script will:
+
 - Create a Python virtual environment
 - Install all required dependencies
 - Set up the project structure
@@ -162,6 +163,7 @@ This project uses pytest for comprehensive testing of Python components:
 - **GPU Tests**: Tests that specifically require GPU acceleration
 
 Key pytest features used:
+
 - Fixtures for test setup and teardown
 - Parameterized tests for testing multiple scenarios
 - Markers for categorizing tests
@@ -177,6 +179,7 @@ Code quality is enforced using pylint with custom configuration:
 - Documentation requirements
 
 Additional tools:
+
 - **Black**: Automatic code formatting
 - **isort**: Import sorting and organization
 - **mypy**: Static type checking
@@ -191,4 +194,4 @@ Please see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for our code of conduct.
 
 ## License
 
-[MIT License](LICENSE) 
+[MIT License](LICENSE)
