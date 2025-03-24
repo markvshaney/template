@@ -1,8 +1,10 @@
+/** @jsx React.createElement */
 import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '../test-utils/render-utils';
 import { generateUser } from '../test-utils/test-data';
+import '@testing-library/jest-dom';
 
 // Example component to test
 const UserProfile = ({ user }: { user: ReturnType<typeof generateUser> }) => {
@@ -28,12 +30,12 @@ describe('UserProfile Component', () => {
   });
 
   it('handles user interaction', async () => {
-    const user = userEvent.setup();
+    const userActions = userEvent.setup();
     render(<UserProfile user={user} />);
 
     // Test button click
     const editButton = screen.getByRole('button', { name: /edit profile/i });
-    await user.click(editButton);
+    await userActions.click(editButton);
 
     // Add assertions for expected behavior after click
     // This is just an example - in a real test, you'd verify the actual behavior

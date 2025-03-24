@@ -1,15 +1,44 @@
-import React from 'react';
+/** @jsx React.createElement */
+import { PrismaClient } from '@prisma/client';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '../test-utils/render-utils';
 import { generateUser } from '../test-utils/test-data';
+import React, { useState, useEffect } from 'react';
+import '@testing-library/jest-dom';
+
+// Mock the Prisma client
+jest.mock('@prisma/client');
+
+// Mock fetch globally
+global.fetch = jest.fn() as jest.Mock;
+
+describe('API Testing Example', () => {
+  let prisma: PrismaClient;
+
+  beforeEach(() => {
+    prisma = new PrismaClient();
+  });
+
+  it('should mock Prisma client methods', async () => {
+    // Example of mocking a Prisma query
+    (prisma.$connect as jest.Mock).mockResolvedValue(undefined);
+    (prisma.$disconnect as jest.Mock).mockResolvedValue(undefined);
+
+    await prisma.$connect();
+    expect(prisma.$connect).toHaveBeenCalled();
+
+    await prisma.$disconnect();
+    expect(prisma.$disconnect).toHaveBeenCalled();
+  });
+});
 
 // Example component that fetches and displays user data
 const UserProfile = () => {
-  const [user, setUser] = React.useState<ReturnType<typeof generateUser> | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const [user, setUser] = useState<ReturnType<typeof generateUser> | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await fetch('/api/user');
