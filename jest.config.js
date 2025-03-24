@@ -4,7 +4,7 @@ const config = {
   testEnvironment: 'jsdom',
 
   // TypeScript support
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/js-with-ts-esm',
 
   // Module resolution
   moduleNameMapper: {
@@ -44,10 +44,17 @@ const config = {
       'ts-jest',
       {
         tsconfig: 'tsconfig.test.json',
+        useESM: true,
       },
     ],
-    '^.+\\.(js|jsx)$': 'babel-jest',
+    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: './babel.config.js' }],
   },
+
+  // Extensions to treat as ESM
+  extensionsToTreatAsEsm: ['.ts', '.tsx', '.mts', '.jsx'],
+
+  // Transform ignore patterns
+  transformIgnorePatterns: ['node_modules/(?!(nanoid|next|@\\w+/\\w+))'],
 
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],

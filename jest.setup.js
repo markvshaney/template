@@ -57,3 +57,5 @@ beforeEach(() => {
 afterEach(() => {
   // Clean up after each test
 });
+
+// No need to export anything as this file is loaded by Jest via setupFilesAfterEnv
