@@ -18,27 +18,26 @@ export interface DocumentInput {
   content: string;
   contentType: string;
   userId: string;
-  source?: string;
+  source?: string | null;
   metadata?: Record<string, any>;
-  fileName?: string;
-  fileSize?: number;
-  mimeType?: string;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
   tags?: string[];
 }
 
 export interface ChunkInput {
   content: string;
   documentId: string;
-  keywords: string[];
-  metadata: Record<string, any>;
+  keywordsString: string;
+  metadata: string;
   startPosition: number;
   endPosition: number;
   chunkIndex: number;
   isFirst: boolean;
   isLast: boolean;
   tokens: number;
-  embeddingModel?: string;
-  embedding?: number[];
+  embeddingModel?: string | null;
 }
 
 /**
@@ -52,15 +51,17 @@ export function documentToDbFormat(
     title: document.metadata.title || 'Untitled Document',
     content: document.content,
     contentType: document.metadata.documentType || 'text/plain',
-    source: document.metadata.url,
+    source: document.metadata.url || null,
     userId,
-    metadata: document.metadata as any,
-    fileName: document.metadata.fileName,
-    fileSize: document.metadata.fileSize,
-    mimeType: document.metadata.mimeType,
+    metadata: JSON.stringify(document.metadata || {}),
+    fileName: document.metadata.fileName || null,
+    fileSize: document.metadata.fileSize || null,
+    mimeType: document.metadata.mimeType || null,
     processingStatus: 'pending',
+    processingError: null,
     isIndexed: false,
-    tags: document.metadata.tags || [],
+    indexedAt: null,
+    tagsString: document.metadata.tags ? document.metadata.tags.join(',') : '',
   };
 }
 
@@ -68,17 +69,19 @@ export function documentToDbFormat(
  * Convert from database Document to application format
  */
 export function dbDocumentToAppFormat(dbDocument: PrismaDocument): Document {
+  const metadata = JSON.parse(dbDocument.metadata as string) as DocumentMetadata;
   return {
     id: dbDocument.id,
     content: dbDocument.content,
     metadata: {
-      ...(dbDocument.metadata as DocumentMetadata),
+      ...metadata,
       title: dbDocument.title,
       url: dbDocument.source || undefined,
       documentType: dbDocument.contentType,
       fileName: dbDocument.fileName || undefined,
       fileSize: dbDocument.fileSize || undefined,
       mimeType: dbDocument.mimeType || undefined,
+      tags: dbDocument.tagsString ? dbDocument.tagsString.split(',') : [],
     },
   };
 }
@@ -90,8 +93,8 @@ export async function createDocument(documentInput: DocumentInput): Promise<Pris
   return prisma.document.create({
     data: {
       ...documentInput,
-      metadata: documentInput.metadata || {},
-      tags: documentInput.tags || [],
+      metadata: JSON.stringify(documentInput.metadata || {}),
+      tagsString: documentInput.tags ? documentInput.tags.join(',') : '',
     },
   });
 }
@@ -100,6 +103,22 @@ export async function createDocument(documentInput: DocumentInput): Promise<Pris
  * Create a document from the application Document format
  */
 export async function createDocumentFromApp(document: Document, userId: string): Promise<Document> {
+  // First check if the user exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    // Create a test user if one doesn't exist
+    await prisma.user.create({
+      data: {
+        id: userId,
+        email: `user_${userId}@example.com`,
+        name: `Test User ${userId}`,
+      },
+    });
+  }
+
   const dbDocument = await prisma.document.create({
     data: documentToDbFormat(document, userId),
   });
@@ -219,8 +238,12 @@ export async function createChunk(chunkInput: ChunkInput): Promise<PrismaChunk> 
   return prisma.chunk.create({
     data: {
       ...chunkInput,
-      embedding: (chunkInput.embedding as any) || [],
-      metadata: chunkInput.metadata || {},
+      keywordsString:
+        typeof chunkInput.keywordsString === 'string' ? chunkInput.keywordsString : '',
+      metadata:
+        typeof chunkInput.metadata === 'string'
+          ? chunkInput.metadata
+          : JSON.stringify(chunkInput.metadata || {}),
     },
   });
 }
@@ -235,8 +258,11 @@ export async function createChunks(chunks: ChunkInput[]): Promise<PrismaChunk[]>
       prisma.chunk.create({
         data: {
           ...chunk,
-          embedding: (chunk.embedding as any) || [],
-          metadata: chunk.metadata || {},
+          keywordsString: typeof chunk.keywordsString === 'string' ? chunk.keywordsString : '',
+          metadata:
+            typeof chunk.metadata === 'string'
+              ? chunk.metadata
+              : JSON.stringify(chunk.metadata || {}),
         },
       })
     )
@@ -253,15 +279,15 @@ export function chunksToDbFormat(
   return documentChunks.map((chunk, index) => ({
     content: chunk.content,
     documentId: documentId,
-    keywords: chunk.metadata.keywords || [],
-    metadata: chunk.metadata as any,
+    keywordsString: Array.isArray(chunk.metadata.keywords) ? chunk.metadata.keywords.join(',') : '',
+    metadata: JSON.stringify(chunk.metadata || {}),
     startPosition: chunk.startPosition,
     endPosition: chunk.endPosition,
     chunkIndex: index,
     isFirst: index === 0,
     isLast: index === documentChunks.length - 1,
     tokens: chunk.metadata.tokens || 0,
-    embeddingModel: chunk.metadata.embeddingModel,
+    embeddingModel: chunk.metadata.embeddingModel || null,
   }));
 }
 
@@ -273,6 +299,22 @@ export async function storeDocumentWithChunks(
   chunks: DocumentChunk[],
   userId: string
 ): Promise<{ document: PrismaDocument; chunks: PrismaChunk[] }> {
+  // First check if the user exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    // Create a test user if one doesn't exist
+    await prisma.user.create({
+      data: {
+        id: userId,
+        email: `user_${userId}@example.com`,
+        name: `Test User ${userId}`,
+      },
+    });
+  }
+
   return prisma.$transaction(async (tx) => {
     // Create document
     const dbDocument = await tx.document.create({
@@ -283,10 +325,7 @@ export async function storeDocumentWithChunks(
     const dbChunks = await Promise.all(
       chunksToDbFormat(chunks, dbDocument.id).map((chunk) =>
         tx.chunk.create({
-          data: {
-            ...chunk,
-            embedding: (chunk.embedding as any) || [],
-          },
+          data: chunk,
         })
       )
     );

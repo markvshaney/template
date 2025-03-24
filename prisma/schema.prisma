@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+    provider = "sqlite"
+    url      = "file:./dev.db"
 }
 
 // Core Models
@@ -40,13 +40,13 @@ model Document {
     createdAt         DateTime    @default(now())
     updatedAt         DateTime    @updatedAt
     title             String
-    content           String      @db.Text
+    content           String      
     contentType       String      // e.g., "text/plain", "text/html", "application/pdf"
     source            String?     // Source URL or identifier
     userId            String
     user              User        @relation(fields: [userId], references: [id])
     chunks            Chunk[]
-    metadata          Json        // Additional document metadata
+    metadata          String      // Additional document metadata as JSON string
     fileName          String?     // Original filename
     fileSize          Int?        // File size in bytes
     mimeType          String?     // MIME type
@@ -54,7 +54,7 @@ model Document {
     processingError   String?     // Error message if processing failed
     isIndexed         Boolean     @default(false)     // Whether the document has been indexed
     indexedAt         DateTime?   // When the document was indexed
-    tags              String[]    // User-defined tags for organization
+    tagsString        String      @default("") // User-defined tags as comma-separated string
     
     @@index([userId])
     @@index([processingStatus])
@@ -63,38 +63,32 @@ model Document {
 }
 
 model Chunk {
-    id              String                      @id @default(cuid())
-    createdAt       DateTime                    @default(now())
-    updatedAt       DateTime                    @updatedAt
-    content         String                      @db.Text
+    id              String      @id @default(cuid())
+    createdAt       DateTime    @default(now())
+    updatedAt       DateTime    @updatedAt
+    content         String      
     documentId      String
-    document        Document                    @relation(fields: [documentId], references: [id], onDelete: Cascade)
-    embedding       Unsupported("vector(1536)") // Vector embedding for similarity search
-    keywords        String[]                    // For hybrid search
-    metadata        Json                        // Chunk-specific metadata
-    startPosition   Int                         // Starting position in document
-    endPosition     Int                         // Ending position in document
-    chunkIndex      Int                         // Sequential index of chunk in document
-    isFirst         Boolean                     // Whether this is the first chunk
-    isLast          Boolean                     // Whether this is the last chunk
-    tokens          Int                         // Number of tokens in the chunk
-    embeddingModel  String?                     // Model used to generate embedding
-    
-    @@index([documentId])
-    @@index([chunkIndex])
+    document        Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+    keywordsString  String      @default("") // For hybrid search as comma-separated string
+    metadata        String      // Chunk-specific metadata as JSON string
+    startPosition   Int         // Starting position in document
+    endPosition     Int         // Ending position in document
+    chunkIndex      Int         // Sequential index of chunk in document
+    isFirst         Boolean     // Whether this is the first chunk
+    isLast          Boolean     // Whether this is the last chunk
+    tokens          Int         // Number of tokens in the chunk
+    embeddingModel  String?     // Model used to generate embedding
 }
 
 // Dedicated embedding model for better organization and future extensibility
 model Embedding {
-    id              String                      @id @default(cuid())
-    createdAt       DateTime                    @default(now())
-    updatedAt       DateTime                    @updatedAt
-    chunkId         String                      @unique
-    modelName       String                      // Name of the embedding model used
-    dimensions      Int                         // Dimensions of the embedding vector
-    vector          Unsupported("vector(1536)") // The actual vector data
-    
-    @@index([chunkId])
+    id              String    @id @default(cuid())
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+    chunkId         String    @unique
+    modelName       String    // Name of the embedding model used
+    dimensions      Int       // Dimensions of the embedding vector
+    vectorData      String    // The actual vector data as JSON string
 }
 
 // Web search models
@@ -107,12 +101,9 @@ model SearchQuery {
     userId      String
     user        User            @relation(fields: [userId], references: [id])
     results     SearchResult[]
-    metadata    Json            // Query context, filters, etc.
+    metadata    String          // Query context, filters, etc. as JSON string
     provider    String          // Search provider used (google, bing, etc.)
     resultCount Int             // Number of results returned
-    
-    @@index([userId])
-    @@index([createdAt])
 }
 
 model SearchResult {
@@ -122,13 +113,10 @@ model SearchResult {
     searchQuery     SearchQuery   @relation(fields: [searchQueryId], references: [id], onDelete: Cascade)
     title           String
     url             String
-    snippet         String        @db.Text
+    snippet         String
     position        Int           // Result position/rank
-    metadata        Json          // Additional result metadata
+    metadata        String        // Additional result metadata as JSON string
     isRelevant      Boolean?      // User feedback on relevance
-    
-    @@index([searchQueryId])
-    @@index([url])
 }
 
 // Search result cache to reduce duplicate API calls
@@ -138,29 +126,26 @@ model SearchCache {
     updatedAt     DateTime  @updatedAt
     query         String    @unique
     provider      String
-    results       Json      // Cached search results
+    results       String    // Cached search results as JSON string
     expiresAt     DateTime  // When the cache expires
-    
-    @@index([query, provider])
-    @@index([expiresAt])
 }
 
 // Legacy models - keeping for backward compatibility
 
 model Memory {
-    id            String                      @id @default(cuid())
-    createdAt     DateTime                    @default(now())
-    updatedAt     DateTime                    @updatedAt
-    content       String                      @db.Text
-    type          String // factual, procedural, social, episodic
-    importance    Float                       @default(0)
+    id            String    @id @default(cuid())
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    content       String
+    type          String    // factual, procedural, social, episodic
+    importance    Float     @default(0)
     userId        String
-    user          User                        @relation(fields: [userId], references: [id])
+    user          User      @relation(fields: [userId], references: [id])
     sessionId     String
-    session       Session                     @relation(fields: [sessionId], references: [id])
-    embedding     Unsupported("vector(1536)") // Vector embedding with 1536 dimensions (for Mistral embeddings)
-    keywords      String[] // For hybrid search
-    metadata      Json // Additional metadata
+    session       Session   @relation(fields: [sessionId], references: [id])
+    embeddingJson String    // Vector embedding as JSON string
+    keywordsString String   @default("") // For hybrid search as comma-separated
+    metadata      String    // Additional metadata as JSON string
     consolidation MemoryConsolidation?
 }
 
@@ -173,7 +158,7 @@ model MemoryConsolidation {
     importance   Float    @default(0)
     lastReviewed DateTime @default(now())
     reviewCount  Int      @default(0)
-    metadata     Json // Consolidation-specific metadata
+    metadata     String   // Consolidation-specific metadata as JSON string
 }
 
 model Specialization {
@@ -184,7 +169,7 @@ model Specialization {
     type      String // factual, procedural, social, episodic
     version   String
     active    Boolean  @default(false)
-    metadata  Json // Specialization-specific metadata
+    metadata  String   // Specialization-specific metadata as JSON string
 }
 
 // Vector Operations Extension

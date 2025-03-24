@@ -4,57 +4,38 @@
  * This script will create the database if it doesn't exist
  * and set up the necessary schema for RAGKit
  */
-const { exec } = require('child_process');
+const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 
-// Check if .env file exists
-if (!fs.existsSync('.env')) {
-  console.log('Creating .env file with default database configuration...');
-  fs.writeFileSync(
-    '.env',
-    'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ragkit?schema=public"\n'
+console.log('Setting up RAGKit database...');
+
+// Create prisma directory if it doesn't exist
+const prismaDir = path.join(__dirname, 'prisma');
+if (!fs.existsSync(prismaDir)) {
+  fs.mkdirSync(prismaDir);
+}
+
+try {
+  // Generate Prisma client
+  console.log('Executing: npx prisma generate');
+  const generateOutput = execSync('npx prisma generate');
+  console.log('stdout:', generateOutput.toString());
+
+  // Push the schema to the database (with SQLite we don't need migrations)
+  console.log('Executing: npx prisma db push');
+  const dbPushOutput = execSync('npx prisma db push --force-reset');
+  console.log('stdout:', dbPushOutput.toString());
+
+  console.log('Database setup completed successfully!');
+} catch (error) {
+  console.error('Database setup failed:', error);
+  console.log('\nTroubleshooting:');
+  console.log(
+    '1. Check that you have the correct database configuration in your prisma/schema.prisma file'
+  );
+  console.log('2. Make sure you have write permissions in the prisma directory');
+  console.log(
+    '3. Try running the commands manually: "npx prisma generate" and "npx prisma db push"'
   );
 }
-
-// Function to execute shell commands
-function executeCommand(command) {
-  return new Promise((resolve, reject) => {
-    console.log(`Executing: ${command}`);
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error: ${error.message}`);
-        return reject(error);
-      }
-      if (stderr) {
-        console.log(`stderr: ${stderr}`);
-      }
-      console.log(`stdout: ${stdout}`);
-      resolve(stdout);
-    });
-  });
-}
-
-// Main function
-async function setup() {
-  try {
-    console.log('Setting up RAGKit database...');
-
-    // Generate Prisma client
-    await executeCommand('npx prisma generate');
-
-    // Run database migrations
-    await executeCommand('npx prisma migrate dev --name document_storage_schema');
-
-    console.log('Database setup complete!');
-    console.log("You can now start the application with 'npm run dev'");
-  } catch (error) {
-    console.error('Database setup failed:', error);
-    console.log('\nTroubleshooting:');
-    console.log('1. Make sure PostgreSQL is installed and running');
-    console.log('2. Check that the database credentials in .env are correct');
-    console.log('3. Ensure you have the necessary permissions to create databases');
-  }
-}
-
-// Run the setup
-setup();

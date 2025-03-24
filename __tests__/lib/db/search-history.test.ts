@@ -26,6 +26,64 @@ import {
   cleanupExpiredCache,
   getCacheStats,
 } from '../../../src/lib/db/cache';
+
+// Mock the db.ts module
+jest.mock('../../../src/lib/db', () => {
+  const mockSearchQuery = {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    deleteMany: jest.fn(),
+    groupBy: jest.fn(),
+    count: jest.fn(),
+  };
+
+  const mockSearchResult = {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    deleteMany: jest.fn(),
+  };
+
+  const mockSearchCache = {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+    upsert: jest.fn(),
+    delete: jest.fn(),
+    deleteMany: jest.fn(),
+    count: jest.fn(),
+  };
+
+  const mockUser = {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    delete: jest.fn(),
+  };
+
+  const mockPrisma = {
+    searchQuery: mockSearchQuery,
+    searchResult: mockSearchResult,
+    searchCache: mockSearchCache,
+    user: mockUser,
+    $transaction: jest.fn((callback) => {
+      if (typeof callback === 'function') {
+        return Promise.resolve(callback(mockPrisma));
+      }
+      return Promise.all(callback);
+    }),
+  };
+
+  return {
+    prisma: mockPrisma,
+    PrismaClient: jest.fn(() => mockPrisma),
+  };
+});
+
+// Import the mocked prisma
 import { prisma } from '../../../src/lib/db';
 
 describe('Search History Utilities', () => {
