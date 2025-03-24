@@ -48,13 +48,18 @@ npm install
 3. **Set up environment variables**
 
 ```bash
-cp .env.local.example .env.local
-# Edit .env.local with your specific configuration
+cp .env.example .env
+# Edit .env with your specific configuration
 ```
 
 4. **Initialize the database**
 
 ```bash
+# Automated setup (creates database, runs migrations)
+npm run setup-db
+
+# Or manual setup
+npm run prisma:generate
 npm run prisma:push
 ```
 
@@ -108,6 +113,7 @@ The application is built with a clean, modular architecture:
 - `npm run dev`: Start development server
 - `npm run build`: Build production version
 - `npm run start`: Run production server
+- `npm run setup-db`: Set up the database with document storage schema
 - `npm run lint`: Run ESLint
 - `npm run test`: Run Jest tests
 - `npm run prisma:generate`: Generate Prisma client

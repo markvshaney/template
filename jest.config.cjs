@@ -38,7 +38,7 @@ const config = {
   },
 
   // Setup files
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
 
   // Transform configuration
   transform: {

@@ -7,9 +7,12 @@ import {
   type MemoryConsolidation,
   type Specialization,
   type VectorIndex,
+  type Document,
+  type Chunk,
+  type SearchQuery,
+  type SearchResult,
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { calculateCosineSimilarity } from './vector';
 
 // PrismaClient is attached to the `global` object in development to prevent
 // exhausting your database connection limit.
@@ -27,78 +30,6 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 // DOCUMENT-CENTRIC FUNCTIONS FOR RAG
 // ============================================================
 
-// Add types for document models that aren't in the Prisma client yet
-type DocumentWithChunks = {
-  id: string;
-  title: string;
-  content: string;
-  contentType: string;
-  source: string | null;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  metadata: Prisma.JsonValue;
-  chunks: ChunkType[];
-};
-
-type ChunkType = {
-  id: string;
-  content: string;
-  documentId: string;
-  embedding: number[];
-  keywords: string[];
-  metadata: Prisma.JsonValue;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type SearchQueryType = {
-  id: string;
-  query: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  metadata: Prisma.JsonValue;
-  results: SearchResultType[];
-};
-
-type SearchResultType = {
-  id: string;
-  searchQueryId: string;
-  title: string;
-  url: string;
-  snippet: string;
-  position: number;
-  createdAt: Date;
-  metadata: Prisma.JsonValue;
-};
-
-// Extend PrismaClient type to include document models
-interface CustomPrismaClient extends PrismaClient {
-  document: {
-    create: (args: any) => Promise<DocumentWithChunks>;
-    findUnique: (args: any) => Promise<DocumentWithChunks | null>;
-    findMany: (args: any) => Promise<DocumentWithChunks[]>;
-    delete: (args: any) => Promise<DocumentWithChunks>;
-    deleteMany: (args: any) => Promise<{ count: number }>;
-  };
-  chunk: {
-    create: (args: any) => Promise<ChunkType>;
-    findMany: (args: any) => Promise<ChunkType[]>;
-    deleteMany: (args: any) => Promise<{ count: number }>;
-  };
-  searchQuery: {
-    create: (args: any) => Promise<SearchQueryType>;
-    findMany: (args: any) => Promise<SearchQueryType[]>;
-    deleteMany: (args: any) => Promise<{ count: number }>;
-  };
-  searchResult: {
-    create: (args: any) => Promise<SearchResultType>;
-    findMany: (args: any) => Promise<SearchResultType[]>;
-    deleteMany: (args: any) => Promise<{ count: number }>;
-  };
-}
-
 // Types for document management
 export enum ContentType {
   TEXT = 'text/plain',
@@ -115,7 +46,7 @@ export interface DocumentInput {
   contentType: ContentType;
   source: string;
   userId: string;
-  metadata?: Prisma.JsonValue;
+  metadata?: Prisma.InputJsonValue;
 }
 
 export interface ChunkInput {
@@ -123,12 +54,14 @@ export interface ChunkInput {
   documentId: string;
   embedding: number[];
   keywords: string[];
-  metadata?: Prisma.JsonValue;
+  metadata?: Prisma.InputJsonValue;
 }
 
 // Document operations
-export async function createDocument(input: DocumentInput): Promise<DocumentWithChunks> {
-  return await (prisma as CustomPrismaClient).document.create({
+export async function createDocument(
+  input: DocumentInput
+): Promise<Document & { chunks: Chunk[] }> {
+  return await prisma.document.create({
     data: {
       id: uuidv4(),
       title: input.title,
@@ -146,8 +79,10 @@ export async function createDocument(input: DocumentInput): Promise<DocumentWith
   });
 }
 
-export async function getDocumentById(id: string): Promise<DocumentWithChunks | null> {
-  return await (prisma as CustomPrismaClient).document.findUnique({
+export async function getDocumentById(
+  id: string
+): Promise<(Document & { chunks: Chunk[] }) | null> {
+  return await prisma.document.findUnique({
     where: { id },
     include: {
       chunks: true,
@@ -155,8 +90,10 @@ export async function getDocumentById(id: string): Promise<DocumentWithChunks | 
   });
 }
 
-export async function getDocumentsByUserId(userId: string): Promise<DocumentWithChunks[]> {
-  return await (prisma as CustomPrismaClient).document.findMany({
+export async function getDocumentsByUserId(
+  userId: string
+): Promise<(Document & { chunks: Chunk[] })[]> {
+  return await prisma.document.findMany({
     where: { userId },
     include: {
       chunks: true,
@@ -164,14 +101,14 @@ export async function getDocumentsByUserId(userId: string): Promise<DocumentWith
   });
 }
 
-export async function deleteDocument(id: string): Promise<DocumentWithChunks | null> {
+export async function deleteDocument(id: string): Promise<(Document & { chunks: Chunk[] }) | null> {
   // First, delete all chunks associated with the document
-  await (prisma as CustomPrismaClient).chunk.deleteMany({
+  await prisma.chunk.deleteMany({
     where: { documentId: id },
   });
 
   // Then delete the document
-  return await (prisma as CustomPrismaClient).document.delete({
+  return await prisma.document.delete({
     where: { id },
     include: {
       chunks: true,
@@ -180,13 +117,13 @@ export async function deleteDocument(id: string): Promise<DocumentWithChunks | n
 }
 
 // Chunk operations
-export async function createChunk(input: ChunkInput): Promise<ChunkType> {
-  return await (prisma as CustomPrismaClient).chunk.create({
+export async function createChunk(input: ChunkInput): Promise<Chunk> {
+  return await prisma.chunk.create({
     data: {
       id: uuidv4(),
       content: input.content,
       documentId: input.documentId,
-      embedding: input.embedding,
+      embedding: input.embedding as unknown as Prisma.InputJsonValue, // Type assertion for vector type
       keywords: input.keywords,
       metadata: input.metadata || {},
       createdAt: new Date(),
@@ -195,8 +132,8 @@ export async function createChunk(input: ChunkInput): Promise<ChunkType> {
   });
 }
 
-export async function getChunksByDocumentId(documentId: string): Promise<ChunkType[]> {
-  return await (prisma as CustomPrismaClient).chunk.findMany({
+export async function getChunksByDocumentId(documentId: string): Promise<Chunk[]> {
+  return await prisma.chunk.findMany({
     where: { documentId },
   });
 }
@@ -205,10 +142,9 @@ export async function findSimilarChunks(
   embedding: number[],
   limit: number = 5,
   threshold: number = 0.7
-): Promise<ChunkType[]> {
+): Promise<Chunk[]> {
   // Use Postgres vector operations for similarity search
-  // This is a simplified approach - in production, you'd use pgvector or similar
-  const results = await (prisma as CustomPrismaClient).$queryRaw`
+  const results = await prisma.$queryRaw`
     SELECT 
       c.id, 
       c.content, 
@@ -228,25 +164,16 @@ export async function findSimilarChunks(
     LIMIT ${limit};
   `;
 
-  return results.map((result: any) => ({
-    id: result.id,
-    content: result.content,
-    documentId: result.documentId,
-    embedding: result.embedding,
-    keywords: result.keywords,
-    metadata: result.metadata,
-    createdAt: result.createdAt,
-    updatedAt: result.updatedAt,
-  }));
+  return results as Chunk[];
 }
 
 // Search history operations
 export async function saveSearchQuery(
   query: string,
   userId: string,
-  metadata?: Prisma.JsonValue
-): Promise<SearchQueryType> {
-  return await (prisma as CustomPrismaClient).searchQuery.create({
+  metadata?: Prisma.InputJsonValue
+): Promise<SearchQuery> {
+  return await prisma.searchQuery.create({
     data: {
       id: uuidv4(),
       query,
@@ -254,9 +181,6 @@ export async function saveSearchQuery(
       metadata: metadata || {},
       createdAt: new Date(),
       updatedAt: new Date(),
-    },
-    include: {
-      results: true,
     },
   });
 }
@@ -267,9 +191,9 @@ export async function saveSearchResult(
   url: string,
   snippet: string,
   position: number,
-  metadata?: any
-): Promise<SearchResultType> {
-  return await (prisma as CustomPrismaClient).searchResult.create({
+  metadata?: Prisma.InputJsonValue
+): Promise<SearchResult> {
+  return await prisma.searchResult.create({
     data: {
       id: uuidv4(),
       searchQueryId,
@@ -286,14 +210,16 @@ export async function saveSearchResult(
 export async function getRecentSearches(
   userId: string,
   limit: number = 10
-): Promise<SearchQueryType[]> {
-  return await (prisma as CustomPrismaClient).searchQuery.findMany({
+): Promise<(SearchQuery & { results: SearchResult[] })[]> {
+  return await prisma.searchQuery.findMany({
     where: { userId },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
     include: {
       results: true,
     },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: limit,
   });
 }
 
@@ -304,14 +230,6 @@ export async function getRecentSearches(
 // Memory Types
 export type MemoryType = 'factual' | 'procedural' | 'social' | 'episodic';
 
-interface Memory {
-  id: string;
-  content: string;
-  type: MemoryType;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 // Memory Creation Interface
 export interface CreateMemoryInput {
   content: string;
@@ -321,21 +239,26 @@ export interface CreateMemoryInput {
   sessionId: string;
   embedding: number[];
   keywords: string[];
-  metadata: Record<string, unknown>;
+  metadata: Prisma.InputJsonValue;
 }
 
 // Memory Utility Functions
-export async function createMemory(data: Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>) {
-  return prisma.memory.create({
+export async function createMemory(
+  data: CreateMemoryInput
+): Promise<Memory & { consolidation: MemoryConsolidation | null }> {
+  return await prisma.memory.create({
     data: {
+      id: uuidv4(),
       content: data.content,
       type: data.type,
       importance: data.importance || 0,
       userId: data.userId,
       sessionId: data.sessionId,
-      embedding: data.embedding as any, // Type assertion needed for vector type
+      embedding: data.embedding as unknown as Prisma.InputJsonValue, // Type assertion for vector type
       keywords: data.keywords,
       metadata: data.metadata,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     include: {
       consolidation: true,
@@ -343,41 +266,46 @@ export async function createMemory(data: Omit<Memory, 'id' | 'createdAt' | 'upda
   });
 }
 
-export async function getMemoriesByUserId(userId: string) {
-  return prisma.memory.findMany({
+export async function getMemoriesByUserId(
+  userId: string
+): Promise<(Memory & { consolidation: MemoryConsolidation | null })[]> {
+  return await prisma.memory.findMany({
     where: { userId },
     include: {
       consolidation: true,
     },
-    orderBy: {
-      updatedAt: 'desc',
-    },
   });
 }
 
-export async function getMemoriesByType(userId: string, type: MemoryType) {
-  return prisma.memory.findMany({
+export async function getMemoriesByType(
+  userId: string,
+  type: MemoryType
+): Promise<(Memory & { consolidation: MemoryConsolidation | null })[]> {
+  return await prisma.memory.findMany({
     where: { userId, type },
     include: {
       consolidation: true,
     },
-    orderBy: {
-      importance: 'desc',
-    },
   });
 }
 
-// Session Management
-export async function createSession(userId: string) {
-  return prisma.session.create({
+export async function createSession(userId: string): Promise<Session> {
+  return await prisma.session.create({
     data: {
+      id: uuidv4(),
       userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 }
 
-export async function getSessionById(id: string) {
-  return prisma.session.findUnique({
+export async function getSessionById(
+  id: string
+): Promise<
+  (Session & { memories: (Memory & { consolidation: MemoryConsolidation | null })[] }) | null
+> {
+  return await prisma.session.findUnique({
     where: { id },
     include: {
       memories: {
@@ -389,9 +317,11 @@ export async function getSessionById(id: string) {
   });
 }
 
-// Memory Consolidation
-export async function consolidateMemory(memoryId: string, importance: number) {
-  return prisma.memoryConsolidation.upsert({
+export async function consolidateMemory(
+  memoryId: string,
+  importance: number
+): Promise<MemoryConsolidation> {
+  return await prisma.memoryConsolidation.upsert({
     where: {
       memoryId,
     },
@@ -403,98 +333,132 @@ export async function consolidateMemory(memoryId: string, importance: number) {
       },
     },
     create: {
+      id: uuidv4(),
       memoryId,
       importance,
       metadata: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 }
 
-// Specialization Management
 export async function createSpecialization(
   name: string,
   type: MemoryType,
   version: string,
-  metadata: Record<string, unknown>
-) {
-  return prisma.specialization.create({
+  metadata: Prisma.InputJsonValue
+): Promise<Specialization> {
+  return await prisma.specialization.create({
     data: {
+      id: uuidv4(),
       name,
       type,
       version,
-      metadata,
-    },
-  });
-}
-
-export async function activateSpecialization(id: string) {
-  // Deactivate all other specializations of the same type
-  const specialization = await prisma.specialization.findUnique({
-    where: { id },
-  });
-
-  if (!specialization) {
-    throw new Error('Specialization not found');
-  }
-
-  await prisma.specialization.updateMany({
-    where: {
-      type: specialization.type,
-      id: {
-        not: id,
-      },
-    },
-    data: {
       active: false,
-    },
-  });
-
-  // Activate the requested specialization
-  return prisma.specialization.update({
-    where: { id },
-    data: {
-      active: true,
-    },
-  });
-}
-
-// Vector Operations
-export async function createVectorIndex(embedding: number[], metadata: Record<string, unknown>) {
-  return prisma.vectorIndex.create({
-    data: {
-      embedding: embedding as any, // Type assertion needed for vector type
       metadata,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 }
 
-// Cleanup function for tests
-export async function cleanupDatabase() {
-  if (process.env.NODE_ENV === 'test') {
-    // Clean new document models
-    await (prisma as CustomPrismaClient).searchResult.deleteMany();
-    await (prisma as CustomPrismaClient).searchQuery.deleteMany();
-    await (prisma as CustomPrismaClient).chunk.deleteMany();
-    await (prisma as CustomPrismaClient).document.deleteMany();
+export async function activateSpecialization(id: string): Promise<Specialization> {
+  // First, deactivate all specializations
+  await prisma.specialization.updateMany({
+    where: { active: true },
+    data: { active: false },
+  });
 
-    // Clean legacy models
-    await prisma.memoryConsolidation.deleteMany();
-    await prisma.memory.deleteMany();
-    await prisma.session.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.specialization.deleteMany();
-    await prisma.vectorIndex.deleteMany();
-  }
+  // Then activate the specified specialization
+  return await prisma.specialization.update({
+    where: { id },
+    data: { active: true },
+  });
 }
 
-export async function getMemories(filter: Partial<Pick<Memory, 'type'>>) {
-  return prisma.memory.findMany({
+export async function createVectorIndex(
+  embedding: number[],
+  metadata: Prisma.InputJsonValue
+): Promise<VectorIndex> {
+  return await prisma.vectorIndex.create({
+    data: {
+      id: uuidv4(),
+      embedding: embedding as unknown as Prisma.InputJsonValue, // Type assertion for vector type
+      metadata,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+}
+
+export async function cleanupDatabase(): Promise<void> {
+  // Delete all data in reverse order of dependencies
+  await prisma.searchResult.deleteMany();
+  await prisma.searchQuery.deleteMany();
+  await prisma.chunk.deleteMany();
+  await prisma.document.deleteMany();
+  await prisma.memoryConsolidation.deleteMany();
+  await prisma.memory.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.specialization.deleteMany();
+  await prisma.vectorIndex.deleteMany();
+  await prisma.user.deleteMany();
+}
+
+export async function getMemories(
+  filter: Partial<Pick<Memory, 'type'>>
+): Promise<(Memory & { consolidation: MemoryConsolidation | null })[]> {
+  return await prisma.memory.findMany({
     where: filter,
     include: {
       consolidation: true,
     },
-    orderBy: {
-      updatedAt: 'desc',
+  });
+}
+
+// User management functions
+export async function createUser(email: string, name: string): Promise<User> {
+  return await prisma.user.create({
+    data: {
+      id: uuidv4(),
+      email,
+      name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  return await prisma.user.findUnique({
+    where: { id },
+  });
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  return await prisma.user.findUnique({
+    where: { email },
+  });
+}
+
+export async function findSimilarMemories(
+  embedding: number[],
+  limit: number = 5,
+  threshold: number = 0.7
+): Promise<(Memory & { consolidation: MemoryConsolidation | null })[]> {
+  const results = await prisma.$queryRaw`
+    SELECT 
+      m.*,
+      (1 - (m.embedding <=> ${embedding}::vector)) as similarity
+    FROM 
+      "Memory" m
+    WHERE 
+      (1 - (m.embedding <=> ${embedding}::vector)) > ${threshold}
+    ORDER BY 
+      similarity DESC
+    LIMIT ${limit};
+  `;
+
+  return results as (Memory & { consolidation: MemoryConsolidation | null })[];
 }

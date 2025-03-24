@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RetrievalOptions, retrieveContext } from '@/lib/rag/retrieval';
+import { RetrievalOptions } from '@/lib/rag/retrieval';
 import { EmbeddingGenerator } from '@/lib/ai/embeddings';
-import { getVectorStore } from './process/route';
+import { similaritySearch } from '@/lib/db/embeddings';
+import { getDocumentById } from '@/lib/db/documents';
 
 // Initialize embedding generator
 const embeddingGenerator = new EmbeddingGenerator();
@@ -18,9 +19,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get vector store
-    const vectorStore = getVectorStore();
-
     // Generate embedding for the query
     const queryEmbedding = await embeddingGenerator.generateEmbedding(query);
 
@@ -34,15 +32,51 @@ export async function POST(request: NextRequest) {
       ...options,
     };
 
-    // Retrieve relevant context
-    const retrievalResult = await retrieveContext(vectorStore, queryEmbedding, retrievalOptions);
+    // Perform similarity search using database
+    const searchResults = await similaritySearch(queryEmbedding, {
+      limit: retrievalOptions.limit,
+      minScore: retrievalOptions.minScore,
+      includeDocument: retrievalOptions.includeSources,
+    });
+
+    // Format results into context and sources
+    let context = '';
+    const sources: { id: string; title: string; url?: string }[] = [];
+    const documentIds = new Set<string>();
+
+    // Build context from search results
+    searchResults.forEach((result) => {
+      const chunk = result.chunk;
+
+      // Add chunk content to context
+      context += `${chunk.content}\n\n`;
+
+      // Track document ID for sources
+      documentIds.add(chunk.documentId);
+    });
+
+    // Get document information for sources if requested
+    if (retrievalOptions.includeSources) {
+      await Promise.all(
+        Array.from(documentIds).map(async (docId) => {
+          const document = await getDocumentById(docId);
+          if (document) {
+            sources.push({
+              id: document.id,
+              title: document.title,
+              url: document.source || undefined,
+            });
+          }
+        })
+      );
+    }
 
     // Return the results
     return NextResponse.json({
       query,
-      context: retrievalResult.context,
-      results: retrievalResult.results,
-      sources: retrievalResult.sources,
+      context,
+      results: searchResults,
+      sources: retrievalOptions.includeSources ? sources : undefined,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -71,21 +105,52 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get vector store
-    const vectorStore = getVectorStore();
-
     // Generate embedding for the query
     const queryEmbedding = await embeddingGenerator.generateEmbedding(query);
 
-    // Use default retrieval options
-    const retrievalResult = await retrieveContext(vectorStore, queryEmbedding);
+    // Perform similarity search with default options
+    const searchResults = await similaritySearch(queryEmbedding, {
+      limit: 5,
+      minScore: 0.7,
+      includeDocument: true,
+    });
+
+    // Format results into context and sources
+    let context = '';
+    const sources: { id: string; title: string; url?: string }[] = [];
+    const documentIds = new Set<string>();
+
+    // Build context from search results
+    searchResults.forEach((result) => {
+      const chunk = result.chunk;
+
+      // Add chunk content to context
+      context += `${chunk.content}\n\n`;
+
+      // Track document ID for sources
+      documentIds.add(chunk.documentId);
+    });
+
+    // Get document information for sources
+    await Promise.all(
+      Array.from(documentIds).map(async (docId) => {
+        const document = await getDocumentById(docId);
+        if (document) {
+          sources.push({
+            id: document.id,
+            title: document.title,
+            url: document.source || undefined,
+          });
+        }
+      })
+    );
 
     // Return the results
     return NextResponse.json({
       query,
-      context: retrievalResult.context,
-      results: retrievalResult.results,
-      sources: retrievalResult.sources,
+      context,
+      results: searchResults,
+      sources,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

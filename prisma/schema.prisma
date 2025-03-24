@@ -36,29 +36,65 @@ model Session {
 // Document-centric models for RAG
 
 model Document {
-    id          String      @id @default(cuid())
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
-    title       String
-    content     String      @db.Text
-    contentType String      // e.g., "text/plain", "text/html", "application/pdf"
-    source      String?     // Source URL or identifier
-    userId      String
-    user        User        @relation(fields: [userId], references: [id])
-    chunks      Chunk[]
-    metadata    Json        // Additional document metadata
+    id                String      @id @default(cuid())
+    createdAt         DateTime    @default(now())
+    updatedAt         DateTime    @updatedAt
+    title             String
+    content           String      @db.Text
+    contentType       String      // e.g., "text/plain", "text/html", "application/pdf"
+    source            String?     // Source URL or identifier
+    userId            String
+    user              User        @relation(fields: [userId], references: [id])
+    chunks            Chunk[]
+    metadata          Json        // Additional document metadata
+    fileName          String?     // Original filename
+    fileSize          Int?        // File size in bytes
+    mimeType          String?     // MIME type
+    processingStatus  String      @default("pending") // pending, processing, completed, failed
+    processingError   String?     // Error message if processing failed
+    isIndexed         Boolean     @default(false)     // Whether the document has been indexed
+    indexedAt         DateTime?   // When the document was indexed
+    tags              String[]    // User-defined tags for organization
+    
+    @@index([userId])
+    @@index([processingStatus])
+    @@index([isIndexed])
+    @@index([title]) // Individual indexes instead of fulltext
 }
 
 model Chunk {
-    id          String                      @id @default(cuid())
-    createdAt   DateTime                    @default(now())
-    updatedAt   DateTime                    @updatedAt
-    content     String                      @db.Text
-    documentId  String
-    document    Document                    @relation(fields: [documentId], references: [id], onDelete: Cascade)
-    embedding   Unsupported("vector(1536)") // Vector embedding for similarity search
-    keywords    String[]                    // For hybrid search
-    metadata    Json                        // Chunk-specific metadata
+    id              String                      @id @default(cuid())
+    createdAt       DateTime                    @default(now())
+    updatedAt       DateTime                    @updatedAt
+    content         String                      @db.Text
+    documentId      String
+    document        Document                    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+    embedding       Unsupported("vector(1536)") // Vector embedding for similarity search
+    keywords        String[]                    // For hybrid search
+    metadata        Json                        // Chunk-specific metadata
+    startPosition   Int                         // Starting position in document
+    endPosition     Int                         // Ending position in document
+    chunkIndex      Int                         // Sequential index of chunk in document
+    isFirst         Boolean                     // Whether this is the first chunk
+    isLast          Boolean                     // Whether this is the last chunk
+    tokens          Int                         // Number of tokens in the chunk
+    embeddingModel  String?                     // Model used to generate embedding
+    
+    @@index([documentId])
+    @@index([chunkIndex])
+}
+
+// Dedicated embedding model for better organization and future extensibility
+model Embedding {
+    id              String                      @id @default(cuid())
+    createdAt       DateTime                    @default(now())
+    updatedAt       DateTime                    @updatedAt
+    chunkId         String                      @unique
+    modelName       String                      // Name of the embedding model used
+    dimensions      Int                         // Dimensions of the embedding vector
+    vector          Unsupported("vector(1536)") // The actual vector data
+    
+    @@index([chunkId])
 }
 
 // Web search models
@@ -72,6 +108,11 @@ model SearchQuery {
     user        User            @relation(fields: [userId], references: [id])
     results     SearchResult[]
     metadata    Json            // Query context, filters, etc.
+    provider    String          // Search provider used (google, bing, etc.)
+    resultCount Int             // Number of results returned
+    
+    @@index([userId])
+    @@index([createdAt])
 }
 
 model SearchResult {
@@ -84,6 +125,24 @@ model SearchResult {
     snippet         String        @db.Text
     position        Int           // Result position/rank
     metadata        Json          // Additional result metadata
+    isRelevant      Boolean?      // User feedback on relevance
+    
+    @@index([searchQueryId])
+    @@index([url])
+}
+
+// Search result cache to reduce duplicate API calls
+model SearchCache {
+    id            String    @id @default(cuid())
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    query         String    @unique
+    provider      String
+    results       Json      // Cached search results
+    expiresAt     DateTime  // When the cache expires
+    
+    @@index([query, provider])
+    @@index([expiresAt])
 }
 
 // Legacy models - keeping for backward compatibility

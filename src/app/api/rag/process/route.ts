@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { chunkDocument, Document } from '@/lib/rag/document-processing';
-import { InMemoryVectorStore, VectorChunk } from '@/lib/rag/vector-store';
+import { chunkDocument } from '@/lib/rag/document-processing';
 import { EmbeddingGenerator } from '@/lib/ai/embeddings';
+import { getDocumentById, updateDocumentStatus, storeDocumentWithChunks } from '@/lib/db/documents';
+import { storeEmbedding, EmbeddingInput } from '@/lib/db/embeddings';
+import { DocumentProcessingStatus } from '@/lib/db/types';
 
-// In a real application, these would be stored in a database
-// For now, we'll use in-memory storage
-const documentStore: Record<string, Document> = {};
-const vectorStore = new InMemoryVectorStore();
+// Initialize embedding generator
 const embeddingGenerator = new EmbeddingGenerator();
 
 export async function POST(request: NextRequest) {
@@ -18,55 +17,98 @@ export async function POST(request: NextRequest) {
     }
 
     // Track documents that were successfully processed
-    const processedDocuments: Document[] = [];
-    const failedDocuments: { id: string; error: string }[] = [];
+    const processedDocuments = [];
+    const failedDocuments = [];
 
     // Process each document
     for (const documentId of documentIds) {
       try {
-        const document = documentStore[documentId];
+        // Update status to processing
+        await updateDocumentStatus(documentId, DocumentProcessingStatus.PROCESSING);
 
-        if (!document) {
+        // Get document from database
+        const dbDocument = await getDocumentById(documentId);
+
+        if (!dbDocument) {
           failedDocuments.push({
             id: documentId,
             error: 'Document not found',
           });
+
+          await updateDocumentStatus(
+            documentId,
+            DocumentProcessingStatus.FAILED,
+            'Document not found'
+          );
+
           continue;
         }
+
+        // Convert to application document format
+        const document = {
+          id: dbDocument.id,
+          content: dbDocument.content,
+          metadata: {
+            ...(dbDocument.metadata as any),
+            title: dbDocument.title,
+          },
+        };
 
         // Chunk the document
         const chunks = chunkDocument(document);
 
         // Generate embeddings for each chunk
+        const chunkEmbeddings: { chunkId: string; vector: number[] }[] = [];
+
         for (const chunk of chunks) {
           try {
             // Generate embedding for the chunk
             const embedding = await embeddingGenerator.generateEmbedding(chunk.content);
-
-            // Create a VectorChunk object
-            const vectorChunk: VectorChunk = {
-              id: chunk.id,
-              documentId: chunk.documentId,
-              chunk,
-              embedding,
-              metadata: chunk.metadata,
-            };
-
-            // Store the chunk and its embedding
-            vectorStore.addVector(vectorChunk);
+            chunkEmbeddings.push({ chunkId: chunk.id, vector: embedding });
           } catch (embeddingError) {
             console.error(`Error generating embedding for chunk ${chunk.id}:`, embeddingError);
             // Continue with next chunk if one fails
           }
         }
 
-        processedDocuments.push(document);
+        // Store document with chunks in database
+        const { document: storedDocument, chunks: storedChunks } = await storeDocumentWithChunks(
+          document,
+          chunks,
+          dbDocument.userId
+        );
+
+        // Store embeddings separately
+        const embeddingPromises = chunkEmbeddings.map(({ chunkId, vector }) => {
+          const embeddingInput: EmbeddingInput = {
+            chunkId,
+            modelName: 'ollama/nomic-embed-text',
+            dimensions: vector.length,
+            vector,
+          };
+
+          return storeEmbedding(embeddingInput);
+        });
+
+        await Promise.all(embeddingPromises);
+
+        // Update document status to completed
+        await updateDocumentStatus(documentId, DocumentProcessingStatus.COMPLETED);
+
+        processedDocuments.push(storedDocument);
       } catch (docError) {
         console.error(`Error processing document ${documentId}:`, docError);
+
         failedDocuments.push({
           id: documentId,
           error: docError instanceof Error ? docError.message : 'Unknown error',
         });
+
+        await updateDocumentStatus(
+          documentId,
+          DocumentProcessingStatus.FAILED,
+          docError instanceof Error ? docError.message : 'Unknown error'
+        );
       }
     }
 
@@ -90,14 +132,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Store a document in memory (this would normally go to a database)
-export function storeDocument(document: Document): void {
-  documentStore[document.id] = document;
-}
-
-// Get the vector store instance (for testing/debugging)
-export function getVectorStore(): InMemoryVectorStore {
-  return vectorStore;
 }

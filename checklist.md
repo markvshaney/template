@@ -218,14 +218,35 @@ Begin Step 7: follow workflow.md
 Begin Step 8: follow workflow.md
 ```
 
-- [ ] **Step 8: Document Storage Schema**
+- [x] **Step 8: Document Storage Schema**
   - Task: Create database schema for document storage and retrieval
-  - Files:
-    - `prisma/schema.prisma`: Update with document, chunk, and embedding models
-    - `src/lib/db/documents.ts`: Create document storage utilities
-    - `src/lib/db/embeddings.ts`: Create embedding storage utilities
-    - `src/lib/db/types.ts`: Define document and embedding types
-    - `__tests__/lib/db/documents.test.ts`: Test document storage functions
+  - Implementation:
+    - Enhanced Prisma schema with comprehensive document and chunk models
+    - Created document storage utilities in `src/lib/db/documents.ts`
+    - Implemented embedding storage utilities in `src/lib/db/embeddings.ts`
+    - Defined shared database types in `src/lib/db/types.ts`
+    - Updated API routes to use database storage instead of in-memory
+    - Added tests for document storage functionality
+  - Files Created/Modified:
+    - ✓ `prisma/schema.prisma`: Enhanced with document, chunk, and embedding models
+    - ✓ `src/lib/db/documents.ts`: Created document storage utilities
+    - ✓ `src/lib/db/embeddings.ts`: Created embedding storage utilities
+    - ✓ `src/lib/db/types.ts`: Defined document and embedding types
+    - ✓ `src/app/api/rag/upload/route.ts`: Updated to use database
+    - ✓ `src/app/api/rag/process/route.ts`: Updated to use database
+    - ✓ `src/app/api/rag/route.ts`: Updated to use database
+    - ✓ `__tests__/lib/db/documents.test.ts`: Added tests for document storage
+  - Key Technical Decisions:
+    - Used dedicated models for documents, chunks, and embeddings
+    - Implemented transaction support for document and chunk operations
+    - Added metadata fields for filtering and organization
+    - Created connection between app-level types and database schema
+    - Added indexes for efficient retrieval and filtering
+  - Verification:
+    - ✓ Document models properly store all required metadata
+    - ✓ Chunk models maintain proper relationships to documents
+    - ✓ API routes correctly store and retrieve from database
+    - ✓ Tests verify CRUD operations and transactions
 
 ```
 Begin Step 9: follow workflow.md

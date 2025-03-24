@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { Document, DocumentMetadata } from '@/lib/rag/document-processing';
+import { createDocumentFromApp } from '@/lib/db/documents';
 
 // Maximum file size (10MB)
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -17,6 +18,10 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
+
+    // In a real app, we would get the user ID from the session
+    // For now we'll use a placeholder user ID for testing
+    const userId = (formData.get('userId') as string) || 'user_placeholder';
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: 'No files provided' }, { status: 400 });
@@ -44,8 +49,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Process files
-    const documents: Document[] = await Promise.all(
+    // Process files and store in database
+    const storedDocuments = await Promise.all(
       files.map(async (file) => {
         const id = uuidv4();
         const content = await file.text();
@@ -62,19 +67,23 @@ export async function POST(request: NextRequest) {
           mimeType: file.type,
         };
 
-        return {
+        const document: Document = {
           id,
           content,
           metadata,
         };
+
+        // Store in database
+        const storedDocument = await createDocumentFromApp(document, userId);
+        return storedDocument;
       })
     );
 
     // Return processed documents
     return NextResponse.json({
       success: true,
-      documents,
-      count: documents.length,
+      documents: storedDocuments,
+      count: storedDocuments.length,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
