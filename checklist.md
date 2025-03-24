@@ -68,38 +68,29 @@ Begin Step 2: follow workflow.md2
 Begin Step 3: follow workflow.md
 ```
 
-- [x] **Step 3: Set Up Code Quality Tools**
-  - Task: Configure code quality tools for consistent development
+- [x] **Step 3: Set Up Database Schema with Prisma**
+  - Task: Implement Prisma ORM for type-safe database interactions
   - Implementation:
-    - Set up ESLint with TypeScript, React, and a11y plugins
-    - Configured Prettier for consistent code formatting
-    - Implemented Husky pre-commit hooks for code quality checks
-    - Added lint-staged to run linters only on changed files
-    - Added commitlint for commit message validation
-    - Created VS Code settings and extension recommendations
-    - Set up Jest for testing with TypeScript support
-    - Enhanced documentation in CODE_QUALITY.md
+    - Added Prisma dependencies to `package.json`
+    - Created `prisma/schema.prisma` with PostgreSQL provider and initial data models
+    - Created database utility functions in `src/lib/db.ts`
+    - Added configuration for database connection in `.env` and `.env.example`
+    - Created test-specific configuration in `.env.test`
+    - Implemented test file `src/lib/db.test.ts` for verification
   - Files Created/Modified:
-    - `package.json`: Added dependencies and scripts for code quality tools
-    - `.eslintrc.js`: Enhanced ESLint configuration
-    - `.prettierrc`: Added Prettier configuration
-    - `.husky/pre-commit`: Configured pre-commit hook
-    - `.husky/commit-msg`: Added commit message validation
-    - `.lintstagedrc.js`: Set up lint-staged configuration
-    - `commitlint.config.js`: Added commitlint configuration
-    - `.vscode/settings.json`: Added VS Code settings
-    - `.vscode/extensions.json`: Added VS Code extension recommendations
-    - `jest.config.js`: Added Jest configuration
-    - `jest.setup.js`: Added Jest setup file
-    - `tsconfig.test.json`: Added TypeScript configuration for tests
-    - `__mocks__/@prisma/client.js`: Added Prisma client mock
-    - `CODE_QUALITY.md`: Updated code quality documentation
+    - ✓ `package.json`: Added Prisma dependencies and scripts
+    - ✓ `prisma/schema.prisma`: Defined initial database models
+    - ✓ `src/lib/db.ts`: Implemented Prisma client and utility functions
+    - ✓ `.env`: Added database connection configuration
+    - ✓ `.env.example`: Added template for environment variables
+    - ✓ `.env.test`: Added test-specific configuration
+    - ✓ `.gitignore`: Updated to exclude .env files
+    - ✓ `src/lib/db.test.ts`: Added tests for database operations
   - Verification Steps:
-    - ESLint catches code quality issues
-    - Prettier formats code consistently
-    - Husky prevents commits that don't meet quality standards
-    - VS Code settings provide developer-friendly experience
-    - Jest tests run properly with TypeScript support
+    - ✓ Can generate Prisma client with `npm run prisma:generate`
+    - ✓ Can apply schema to database with `npm run prisma:push`
+    - ✓ Can run database tests to verify functionality
+  - Note: This schema will be extended in Step 8 to support document storage, chunking, and embeddings for the RAG system instead of the original memory-focused approach.
 
 ```
 Begin Step 4: follow workflow.md
@@ -193,129 +184,6 @@ d
 Begin Step 7: follow workflow.md
 ```
 
-- [ ] **Step 7: Organize Prisma Schema Structure**
-  - Task: Improve organization of existing Prisma schema
-  - Plan:
-    - Create domain-specific schema organization for Prisma
-    - Enhance database utility functions
-    - Improve database layer documentation
-    - Ensure consistent patterns across schema definitions
-  - Files:
-    - `prisma/schema/`: Create domain-specific schema files
-    - `src/lib/db/`: Organize database utilities by domain
-    - `src/lib/db/index.ts`: Create central export for Prisma client and utilities
-
-## Phase 2: Database Schema and Configuration
-
-```
-Begin Step 8: follow workflow.md
-```
-
-- [ ] **Step 8: Set Up Database Schema - Core Tables**
-  - Task: Define core database tables for the system
-  - Files:
-    - `db/schema/sessions.ts`: Create session tracking tables
-    - `db/schema/content.ts`: Create content and memory storage tables
-
-```
-Begin Step 9: follow workflow.md
-```
-
-- [ ] **Step 9: Set Up Database Schema - Memory Systems**
-  - Task: Define tables for memory systems
-  - Files:
-    - `db/schema/memory.ts`: Create memory-related tables
-    - `db/schema/specializations.ts`: Create tables for specialty domains
-    - `db/schema/index.ts`: Update to include new schema tables
-
-```
-Begin Step 10: follow workflow.md
-```
-
-- [ ] **Step 10: Update Database Connection**
-  - Task: Update the database connection to use the complete schema
-  - Files:
-    - `db/db.ts`: Update the schema import and configuration
-
-```
-Begin Step 11: follow workflow.md
-```
-
-- [ ] **Step 11: Create Supabase Configuration**
-  - Task: Set up Supabase integration for vector storage and retrieval
-  - Files:
-    - `lib/supabase.ts`: Create Supabase client configuration
-    - `.env.local`: Update with Supabase credentials
-
-```
-Begin Step 12: follow workflow.md
-```
-
-- [ ] **Step 12: Create Database Schema Tests**
-  - Task: Implement tests for database schema and connections
-  - Files:
-    - `__tests__/db/schema.test.ts`: Create schema validation tests
-    - `__tests__/lib/supabase.test.ts`: Create vector storage tests
-
-## Phase 3: Core AI Infrastructure
-
-```
-Begin Step 13: follow workflow.md
-```
-
-- [ ] **Step 13: Create Model Loading Infrastructure**
-  - Task: Implement core functionality for loading the Mistral 7B base model
-  - Files:
-    - `lib/ai/model.ts`: Create model loading and management functions
-    - `lib/ai/config.ts`: Create configuration for model parameters
-
-```
-Begin Step 14: follow workflow.md
-```
-
-- [ ] **Step 14: Implement 8-bit Quantization**
-  - Task: Add 8-bit quantization support for memory efficiency
-  - Files:
-    - `lib/ai/quantization.ts`: Create quantization utilities
-    - `lib/ai/model.ts`: Update to support quantized models
-
-```
-Begin Step 15: follow workflow.md
-```
-
-- [ ] **Step 15: Implement GPU Optimization**
-  - Task: Create optimizations for consumer GPUs
-  - Files:
-    - `lib/optimization/gpu.ts`: Create GPU optimization utilities
-    - `lib/ai/model.ts`: Update with GPU optimizations
-
-```
-Begin Step 16: follow workflow.md
-```
-
-- [ ] **Step 16: Implement Sparse Activation**
-  - Task: Create sparse activation optimizations
-  - Files:
-    - `lib/optimization/sparse-activation.ts`: Implement sparse activation
-    - `lib/ai/model.ts`: Update with sparse activation
-
-```
-Begin Step 17: follow workflow.md
-```
-
-- [ ] **Step 17: Create Core AI Tests**
-  - Task: Implement tests for core AI model functionality
-  - Files:
-    - `__tests__/lib/ai/model.test.ts`: Create model tests
-    - `__tests__/lib/ai/quantization.test.ts`: Create quantization tests
-    - `__tests__/lib/optimization/gpu.test.ts`: Create GPU optimization tests
-
-## Phase 4: Web Search and RAG Implementation
-
-```
-Begin Step 7: follow workflow.md
-```
-
 - [ ] **Step 7: Build Search and RAG Interface**
   - Task: Create UI components for search and RAG interaction
   - Files:
@@ -325,3 +193,155 @@ Begin Step 7: follow workflow.md
     - `components/rag/RetrievalResults.tsx`: Display retrieved context
     - `app/api/search/route.ts`: API route for web search
     - `app/api/rag/route.ts`: API route for RAG operations
+
+## Phase 2: Database and Storage
+
+```
+Begin Step 8: follow workflow.md
+```
+
+- [ ] **Step 8: Document Storage Schema**
+  - Task: Create database schema for document storage and retrieval
+  - Files:
+    - `prisma/schema.prisma`: Update with document, chunk, and embedding models
+    - `src/lib/db/documents.ts`: Create document storage utilities
+    - `src/lib/db/embeddings.ts`: Create embedding storage utilities
+    - `src/lib/db/types.ts`: Define document and embedding types
+    - `__tests__/lib/db/documents.test.ts`: Test document storage functions
+
+```
+Begin Step 9: follow workflow.md
+```
+
+- [ ] **Step 9: Search History Schema**
+  - Task: Implement schema for storing search queries and results
+  - Files:
+    - `prisma/schema.prisma`: Add search history models
+    - `src/lib/db/search-history.ts`: Create search history utilities
+    - `src/lib/db/cache.ts`: Implement caching mechanisms for search results
+    - `__tests__/lib/db/search-history.test.ts`: Test search history functions
+
+```
+Begin Step 10: follow workflow.md
+```
+
+- [ ] **Step 10: Vector Storage Implementation**
+  - Task: Create vector storage and similarity search functionality
+  - Files:
+    - `src/lib/db/vector-operations.ts`: Implement vector similarity functions
+    - `src/lib/db/index.ts`: Update with vector operation exports
+    - `__tests__/lib/db/vector-operations.test.ts`: Test vector operations
+
+## Phase 3: Search and RAG Implementation
+
+```
+Begin Step 11: follow workflow.md
+```
+
+- [ ] **Step 11: Web Search Integration**
+  - Task: Implement web search API client and result processing
+  - Files:
+    - `src/lib/search/web-search.ts`: Create search API client
+    - `src/lib/search/result-processor.ts`: Implement result filtering and processing
+    - `src/lib/search/types.ts`: Define search-related types
+    - `__tests__/lib/search/web-search.test.ts`: Test search functionality
+
+```
+Begin Step 12: follow workflow.md
+```
+
+- [ ] **Step 12: Document Processing**
+  - Task: Create document chunking and processing utilities
+  - Files:
+    - `src/lib/rag/document-processing.ts`: Implement text chunking algorithms
+    - `src/lib/rag/metadata-extraction.ts`: Create metadata extraction utilities
+    - `src/lib/rag/types.ts`: Define document processing types
+    - `__tests__/lib/rag/document-processing.test.ts`: Test document processing
+
+```
+Begin Step 13: follow workflow.md
+```
+
+- [ ] **Step 13: RAG Retrieval System**
+  - Task: Build retrieval system for finding relevant context
+  - Files:
+    - `src/lib/rag/retrieval.ts`: Implement document retrieval functions
+    - `src/lib/rag/ranking.ts`: Create relevance ranking algorithms
+    - `src/lib/rag/hybrid-search.ts`: Implement combined keyword and vector search
+    - `__tests__/lib/rag/retrieval.test.ts`: Test retrieval functionality
+
+## Phase 4: Ollama Integration
+
+```
+Begin Step 14: follow workflow.md
+```
+
+- [ ] **Step 14: Ollama API Client**
+  - Task: Create client for communicating with local Ollama models
+  - Files:
+    - `src/lib/ai/ollama.ts`: Implement Ollama API client
+    - `src/lib/ai/models.ts`: Define model configuration and selection
+    - `src/lib/ai/types.ts`: Create types for Ollama interactions
+    - `__tests__/lib/ai/ollama.test.ts`: Test Ollama client functionality
+
+```
+Begin Step 15: follow workflow.md
+```
+
+- [ ] **Step 15: Embedding Generation**
+  - Task: Implement text embedding using local Ollama models
+  - Files:
+    - `src/lib/ai/embeddings.ts`: Create embedding generation utilities
+    - `src/lib/ai/batch-processing.ts`: Implement batch processing for efficiency
+    - `__tests__/lib/ai/embeddings.test.ts`: Test embedding generation
+
+```
+Begin Step 16: follow workflow.md
+```
+
+- [ ] **Step 16: Chat Completion with Context**
+  - Task: Create system for generating responses with retrieved context
+  - Files:
+    - `src/lib/ai/chat.ts`: Implement chat completion with context
+    - `src/lib/ai/prompt-engineering.ts`: Create prompt templates for various use cases
+    - `src/lib/ai/streaming.ts`: Implement streaming response handling
+    - `__tests__/lib/ai/chat.test.ts`: Test chat completion functionality
+
+## Phase 5: User Interface
+
+```
+Begin Step 17: follow workflow.md
+```
+
+- [ ] **Step 17: Search Interface**
+  - Task: Create user interface for web search functionality
+  - Files:
+    - `src/components/search/SearchBar.tsx`: Implement search input component
+    - `src/components/search/SearchResults.tsx`: Create search results display
+    - `src/components/search/SearchFilters.tsx`: Add filtering options
+    - `__tests__/components/search/SearchBar.test.tsx`: Test search components
+
+```
+Begin Step 18: follow workflow.md
+```
+
+- [ ] **Step 18: Document Management UI**
+  - Task: Build interface for document upload and management
+  - Files:
+    - `src/components/documents/DocumentUpload.tsx`: Create document upload component
+    - `src/components/documents/DocumentList.tsx`: Implement document browsing
+    - `src/components/documents/DocumentViewer.tsx`: Add document preview functionality
+    - `__tests__/components/documents/DocumentUpload.test.tsx`: Test document components
+
+```
+Begin Step 19: follow workflow.md
+```
+
+- [ ] **Step 19: Chat Interface**
+  - Task: Implement chat interface with streaming support
+  - Files:
+    - `src/components/chat/ChatInput.tsx`: Create chat input component
+    - `src/components/chat/ChatMessage.tsx`: Implement message display
+    - `src/components/chat/ChatWindow.tsx`: Create complete chat interface
+    - `src/components/chat/ContextViewer.tsx`: Show retrieved context sources
+    - `__tests__/components/chat/ChatWindow.test.tsx`: Test chat components
