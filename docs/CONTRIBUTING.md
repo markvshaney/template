@@ -46,7 +46,7 @@ This project adheres to a Code of Conduct that all contributors are expected to 
 
 ## Development Workflow
 
-Please follow the workflow outlined in [docs/workflow.md](docs/workflow.md) for step-by-step guidance on the development process.
+Please follow the workflow outlined in [.cursorrules/workflow.md](../.cursorrules/workflow.md) for step-by-step guidance on the development process.
 
 For Git-specific workflows, refer to [docs/git_info/Git_Protocol.md](docs/git_info/Git_Protocol.md).
 

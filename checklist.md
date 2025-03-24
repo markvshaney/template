@@ -168,7 +168,7 @@ d
     - `.env.ci`: Add CI-specific environment variables
   - Status: Conditionally complete with known issues in database tests and Storybook build
 
-- [⏳] **Step 6: Implement Web Search, RAG, and Ollama Integration**
+- [✅] **Step 6: Implement Web Search, RAG, and Ollama Integration**
   - Task: Set up web search capabilities, retrieval augmented generation, and local AI with Ollama
   - Files:
     - `lib/search/web-search.ts`: Implement web search functionality
@@ -178,7 +178,6 @@ d
     - `lib/ai/ollama.ts`: Create Ollama API client for local AI models
     - `lib/ai/embeddings.ts`: Text embedding generation with local models
     - `.env.local.example`: Add example environment variables for APIs
-  - Status: In progress
 
 ```
 Begin Step 7: follow workflow.md

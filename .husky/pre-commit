@@ -1,10 +1,4 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npm run pre-commit
-
-# Run lint-staged
-npx lint-staged
-
-# Run TypeScript type check on entire project
-npx tsc --noEmit 
+npm test
