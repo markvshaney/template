@@ -166,6 +166,7 @@ d
 ```
 
 - [⚠️] **Step 5.5: Set Up CI/CD Pipeline for Component Tests**
+
   - Task: Configure CI/CD pipeline integration for component tests
   - Files:
     - `.github/workflows/test.yml`: Create GitHub Actions workflow
@@ -176,31 +177,17 @@ d
     - `.env.ci`: Add CI-specific environment variables
   - Status: Conditionally complete with known issues in database tests and Storybook build
 
-```
-Begin Step 6: follow workflow.md
-```
-
-- [ ] **Step 6: Install AI and Database Dependencies**
-  - Task: Add necessary dependencies for AI and database functionality
-  - Plan:
-    - Add AI core dependencies for model handling
-    - Add vector storage and processing libraries
-    - Add memory management utilities
-    - Add database extensions for vector operations
-    - Add utility dependencies and type definitions
-    - Create model management scripts
-  - Recap (Implementation):
-    - Added TensorFlow.js, transformers.js, and ONNX Runtime for AI models
-    - Added vector processing libraries including Pinecone, vectorious, and similarity
-    - Added memory management tools like node-cache and LRU cache
-    - Added database extensions including Supabase and pgvector
-    - Added utility dependencies and corresponding type definitions
-    - Created scripts for model downloading and optimization
-    - Added new npm scripts for AI and database setup
-  - Verification:
-    - Dependencies are added to package.json
-    - Model management scripts are created in scripts directory
-    - Directory structure is created for model storage
+- [⏳] **Step 6: Implement Web Search, RAG, and Ollama Integration**
+  - Task: Set up web search capabilities, retrieval augmented generation, and local AI with Ollama
+  - Files:
+    - `lib/search/web-search.ts`: Implement web search functionality
+    - `lib/rag/document-processing.ts`: Create document chunking and processing
+    - `lib/rag/vector-store.ts`: Set up vector storage with simple local implementation
+    - `lib/rag/retrieval.ts`: Build retrieval functions for augmenting generation
+    - `lib/ai/ollama.ts`: Create Ollama API client for local AI models
+    - `lib/ai/embeddings.ts`: Text embedding generation with local models
+    - `.env.local.example`: Add example environment variables for APIs
+  - Status: In progress
 
 ```
 Begin Step 7: follow workflow.md
@@ -323,130 +310,18 @@ Begin Step 17: follow workflow.md
     - `__tests__/lib/ai/quantization.test.ts`: Create quantization tests
     - `__tests__/lib/optimization/gpu.test.ts`: Create GPU optimization tests
 
-## Phase 4: Vector Embedding and LoRA Adapters
+## Phase 4: Web Search and RAG Implementation
 
 ```
-Begin Step 18: follow workflow.md
+Begin Step 7: follow workflow.md
 ```
 
-- [ ] **Step 18: Implement Vector Embedding Pipeline**
-  - Task: Create the embedding pipeline for converting interactions to vectors
+- [ ] **Step 7: Build Search and RAG Interface**
+  - Task: Create UI components for search and RAG interaction
   - Files:
-    - `lib/ai/embeddings.ts`: Create embedding generation utilities
-    - `lib/ai/vectordb.ts`: Create vector storage and retrieval functions
-
-```
-Begin Step 19: follow workflow.md
-```
-
-- [ ] **Step 19: Create Keyword Extraction System**
-  - Task: Implement keyword extraction for hybrid retrieval
-  - Files:
-    - `lib/ai/keywords.ts`: Create keyword extraction utilities
-    - `lib/ai/retrieval.ts`: Create hybrid retrieval functions
-
-```
-Begin Step 20: follow workflow.md
-```
-
-- [ ] **Step 20: Create LoRA Adapter Framework**
-  - Task: Implement LoRA adapter loading and switching for domain specializations
-  - Files:
-    - `lib/ai/lora.ts`: Create LoRA adapter management utilities
-    - `lib/ai/model.ts`: Update to integrate LoRA adapters
-
-```
-Begin Step 21: follow workflow.md
-```
-
-- [ ] **Step 21: Vector and LoRA Tests**
-  - Task: Create tests for vector embeddings and LoRA adapters
-  - Files:
-    - `__tests__/lib/ai/embeddings.test.ts`: Create embedding tests
-    - `__tests__/lib/ai/lora.test.ts`: Create LoRA adapter tests
-    - `__tests__/lib/ai/retrieval.test.ts`: Create retrieval tests
-
-## Phase 5: Memory Architecture
-
-```
-Begin Step 22: follow workflow.md
-```
-
-- [ ] **Step 22: Implement Neocortical System**
-  - Task: Create the slow-learning neocortical system based on Mistral 7B
-  - Files:
-    - `lib/memory/neocortical.ts`: Create neocortical system implementation
-    - `lib/memory/types.ts`: Define memory system types
-
-```
-Begin Step 23: follow workflow.md
-```
-
-- [ ] **Step 23: Implement Hippocampal Fast Learning System**
-  - Task: Create the fast-learning hippocampal system using RAG
-  - Files:
-    - `lib/memory/hippocampal.ts`: Create hippocampal system implementation
-    - `lib/memory/rag.ts`: Implement retrieval-augmented generation
-
-```
-Begin Step 24: follow workflow.md
-```
-
-- [ ] **Step 24: Implement Memory Integration System**
-  - Task: Create the system that integrates slow and fast learning systems
-  - Files:
-    - `lib/memory/integration.ts`: Create integration logic
-    - `lib/memory/index.ts`: Export unified memory system
-
-```
-Begin Step 25: follow workflow.md
-```
-
-- [ ] **Step 25: Memory Architecture Tests**
-  - Task: Create tests for memory architecture components
-  - Files:
-    - `__tests__/lib/memory/neocortical.test.ts`: Create neocortical system tests
-    - `__tests__/lib/memory/hippocampal.test.ts`: Create hippocampal system tests
-    - `__tests__/lib/memory/integration.test.ts`: Create integration tests
-
-## Phase 6: Memory Management
-
-```
-Begin Step 26: follow workflow.md
-```
-
-- [ ] **Step 26: Implement Prediction Error Calculation**
-  - Task: Create system for calculating prediction error for memory importance
-  - Files:
-    - `lib/memory-management/prediction-error.ts`: Implement prediction error calculation
-    - `lib/memory-management/types.ts`: Define memory management types
-
-```
-Begin Step 27: follow workflow.md
-```
-
-- [ ] **Step 27: Implement Priority Queue for Memory Replay**
-  - Task: Create priority queue based on surprise scores for memory replay
-  - Files:
-    - `lib/memory-management/priority-queue.ts`: Implement priority queue
-    - `lib/memory-management/replay.ts`: Create memory replay system
-
-```
-Begin Step 28: follow workflow.md
-```
-
-- [ ] **Step 28: Implement Memory Consolidation Scheduler**
-  - Task: Create scheduler for memory consolidation
-  - Files:
-    - `lib/memory-management/scheduler.ts`: Implement consolidation scheduler
-    - `lib/memory-management/consolidation.ts`: Create consolidation logic
-
-```
-Begin Step 29: follow workflow.md
-```
-
-- [ ] **Step 29: Implement Parameter Importance Tracking**
-  - Task: Create Synaptic Intelligence for parameter importance tracking
-  - Files:
-    - `lib/memory-management/synaptic-intelligence.ts`: Implement parameter importance tracking
-    - `lib/memory-management/importance.ts`: Create importance score utilities
+    - `components/search/SearchBar.tsx`: Create search input component
+    - `components/search/SearchResults.tsx`: Display search results
+    - `components/rag/DocumentUpload.tsx`: Document upload and processing UI
+    - `components/rag/RetrievalResults.tsx`: Display retrieved context
+    - `app/api/search/route.ts`: API route for web search
+    - `app/api/rag/route.ts`: API route for RAG operations
