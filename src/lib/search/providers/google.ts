@@ -6,6 +6,22 @@ import {
 } from '../types';
 
 /**
+ * Google Search API result item interface
+ */
+interface GoogleSearchResultItem {
+  title?: string;
+  link?: string;
+  snippet?: string;
+  displayLink?: string;
+  formattedUrl?: string;
+  htmlSnippet?: string;
+  htmlTitle?: string;
+  kind?: string;
+  labels?: string[];
+  [key: string]: unknown;
+}
+
+/**
  * Google Search Provider
  * Uses the Google Search API to perform web searches
  */
@@ -106,7 +122,7 @@ export class GoogleSearchProvider implements SearchProviderInterface {
       }
 
       // Transform Google search results into our standard format
-      return data.items.map((item: any, index: number) => ({
+      return data.items.map((item: GoogleSearchResultItem, index: number) => ({
         title: item.title || '',
         url: item.link || '',
         snippet: item.snippet || '',

@@ -36,7 +36,7 @@ export interface SearchResult {
   /** Position in search results (1-based) */
   position: number;
   /** Additional metadata for the search result */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
