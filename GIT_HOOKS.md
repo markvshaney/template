@@ -71,3 +71,7 @@ When using AI coding assistants like GitHub Copilot or Cursor, git hooks may cau
 ## Customizing Hooks
 
 If certain hooks continue to cause problems, you can edit the hook scripts in the `.husky` directory to customize their behavior or make them more efficient.
+
+## Note
+
+The hooks have been optimized to work better with AI assistants and prevent hanging issues.
