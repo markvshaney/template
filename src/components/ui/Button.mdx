@@ -1,0 +1,36 @@
+import { Meta, Story, Controls, Primary } from '@storybook/blocks';
+import * as ButtonStories from './Button.stories';
+import { Button } from './Button';
+
+<Meta of={ButtonStories} />
+
+# Button Component
+
+A versatile button component that supports multiple variants and sizes.
+
+## Usage
+
+```tsx
+import { Button } from '@/components/ui/Button';
+
+// Default button
+<Button>Click me</Button>
+
+// Secondary variant
+<Button variant="secondary">Secondary</Button>
+
+// Destructive variant
+<Button variant="destructive">Delete</Button>
+
+// Different sizes
+<Button size="sm">Small</Button>
+<Button size="lg">Large</Button>
+```
+
+## Props
+
+<Controls />
+
+## Examples
+
+<Primary />

@@ -23,6 +23,7 @@ This document outlines the code quality tools and standards used in this project
 - Pre-commit hooks for code quality checks
 - Commit message validation
 - Lint-staged for efficient linting
+- Pre-push: Runs essential checks before pushing to remote
 
 ### VS Code Integration
 
@@ -101,6 +102,27 @@ Configuration is in `.prettierrc`. Settings:
 
 - Pre-commit: Runs lint-staged
 - Commit-msg: Validates commit messages
+- Pre-push: Runs essential checks before pushing to remote
+
+#### Pre-push Hook
+
+The pre-push hook runs the following checks before allowing code to be pushed:
+
+1. TypeScript type checking
+2. Linting on staged files
+3. Basic test suite
+
+To skip pre-push checks (use with caution):
+
+```bash
+npm run push:skip-checks
+```
+
+Note: Skipping pre-push checks should be done only in exceptional circumstances, such as:
+
+- Emergency hotfixes
+- Temporary workarounds
+- When checks are temporarily broken
 
 ## Troubleshooting
 

@@ -13,23 +13,80 @@ datasource db {
 // Core Models
 
 model User {
-    id        String    @id @default(cuid())
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    email     String    @unique
-    name      String?
-    sessions  Session[]
-    memories  Memory[]
+    id              String          @id @default(cuid())
+    createdAt       DateTime        @default(now())
+    updatedAt       DateTime        @updatedAt
+    email           String          @unique
+    name            String?
+    sessions        Session[]
+    memories        Memory[]        // Keeping for backward compatibility
+    documents       Document[]      // New relation for document storage
+    searchQueries   SearchQuery[]   // Search history tracking
 }
 
 model Session {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id        String      @id @default(cuid())
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
     userId    String
-    user      User     @relation(fields: [userId], references: [id])
-    memories  Memory[]
+    user      User        @relation(fields: [userId], references: [id])
+    memories  Memory[]    // Keeping for backward compatibility
 }
+
+// Document-centric models for RAG
+
+model Document {
+    id          String      @id @default(cuid())
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    title       String
+    content     String      @db.Text
+    contentType String      // e.g., "text/plain", "text/html", "application/pdf"
+    source      String?     // Source URL or identifier
+    userId      String
+    user        User        @relation(fields: [userId], references: [id])
+    chunks      Chunk[]
+    metadata    Json        // Additional document metadata
+}
+
+model Chunk {
+    id          String                      @id @default(cuid())
+    createdAt   DateTime                    @default(now())
+    updatedAt   DateTime                    @updatedAt
+    content     String                      @db.Text
+    documentId  String
+    document    Document                    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+    embedding   Unsupported("vector(1536)") // Vector embedding for similarity search
+    keywords    String[]                    // For hybrid search
+    metadata    Json                        // Chunk-specific metadata
+}
+
+// Web search models
+
+model SearchQuery {
+    id          String          @id @default(cuid())
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime        @updatedAt
+    query       String
+    userId      String
+    user        User            @relation(fields: [userId], references: [id])
+    results     SearchResult[]
+    metadata    Json            // Query context, filters, etc.
+}
+
+model SearchResult {
+    id              String        @id @default(cuid())
+    createdAt       DateTime      @default(now())
+    searchQueryId   String
+    searchQuery     SearchQuery   @relation(fields: [searchQueryId], references: [id], onDelete: Cascade)
+    title           String
+    url             String
+    snippet         String        @db.Text
+    position        Int           // Result position/rank
+    metadata        Json          // Additional result metadata
+}
+
+// Legacy models - keeping for backward compatibility
 
 model Memory {
     id            String                      @id @default(cuid())

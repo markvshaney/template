@@ -1,0 +1,35 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Skip pre-push hook if --no-verify is used
+if [ "$SKIP_PRE_PUSH" = "true" ]; then
+  exit 0
+fi
+
+echo "🔍 Running pre-push checks..."
+
+# Run TypeScript type checking
+echo "📝 Checking TypeScript types..."
+npx tsc --noEmit || {
+  echo "❌ TypeScript check failed. Please fix type errors before pushing."
+  echo "💡 Tip: Run 'npx tsc --noEmit' locally to see all type errors."
+  exit 1
+}
+
+# Run linting on staged files
+echo "🧹 Running linters..."
+npx lint-staged || {
+  echo "❌ Linting failed. Please fix linting errors before pushing."
+  echo "💡 Tip: Run 'npm run lint:fix' to fix linting issues."
+  exit 1
+}
+
+# Run basic tests
+echo "🧪 Running basic tests..."
+npm test || {
+  echo "❌ Tests failed. Please fix failing tests before pushing."
+  echo "💡 Tip: Run 'npm test' locally to see test failures."
+  exit 1
+}
+
+echo "✅ All pre-push checks passed!" 

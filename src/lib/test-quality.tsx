@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from "react";
 
 // Intentional ESLint errors:
 // - Unused variable
@@ -6,25 +6,29 @@ import React, { useState } from 'react';
 // - Incorrect spacing
 // - Missing semicolon
 const testFunction = (param: number) => {
-  const unusedVar = 'test';
-  return param + 1;
+    const unusedVar = "test";
+    return param + 1;
 };
 
 // Intentional Prettier formatting issues:
 const badlyFormattedObject = {
-  prop1: 'value1',
-  prop2: 'value2',
-  prop3: 'value3',
+    prop1: "value1",
+    prop2:    "value2",
+    prop3:     "value3"
 };
 
 // Intentional TypeScript errors:
-const stringLength: number = 'this should be a number'; // Clear type error
+const untypedFunction = (param: string) => {
+    return param.length;
+};
 
 // Intentional React Hook errors:
 const TestComponent = () => {
-  const [state, setState] = useState('test');
-  if (state === 'test') {
-    setState('new value');
-  }
-  return <div>{state}</div>;
+    const [state, setState] = useState("test");
+    if (state === "test") {
+        setState("new value");
+    }
+    return <div>{state}</div>;
 };
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 

@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "",
+    "allowJs": true,
+    "checkJs": true,
+    "types": ["node", "@storybook/types"]
+  },
+  "include": [
+    "../.storybook/**/*",
+    "../src/**/*.stories.ts",
+    "../src/**/*.stories.tsx",
+    "../src/**/*.stories.mdx"
+  ],
+  "exclude": ["node_modules"]
+}

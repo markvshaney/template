@@ -1,36 +1,68 @@
-const nextJest = require('next/jest');
+/** @type {import('jest').Config} */
+const config = {
+  // Test environment
+  testEnvironment: 'jsdom',
 
-const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
-  dir: './',
-});
+  // TypeScript support
+  preset: 'ts-jest',
 
-// Add any custom config to be passed to Jest
-const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testEnvironment: 'jest-environment-jsdom',
+  // Module resolution
   moduleNameMapper: {
-    // Handle module aliases (if you're using them in your Next.js project)
+    // Handle module aliases (if you're using them in tsconfig.json)
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Handle CSS imports (if you're using CSS modules)
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    // Handle image imports
+    '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/__mocks__/fileMock.js',
   },
-  testMatch: ['**/__tests__/**/*.test.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
-  collectCoverage: true,
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/**/*.stories.{js,jsx,ts,tsx}',
-    '!src/**/*.test.{js,jsx,ts,tsx}',
-    '!src/**/index.{js,ts}',
+
+  // Test file patterns
+  testMatch: [
+    '<rootDir>/__tests__/**/*.{js,jsx,ts,tsx}',
+    '<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}',
   ],
+
+  // Coverage configuration
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
+      statements: 80,
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80,
     },
   },
+
+  // Setup files
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+
+  // Transform configuration
+  transform: {
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.test.json',
+      },
+    ],
+    '^.+\\.(js|jsx)$': 'babel-jest',
+  },
+
+  // Module file extensions
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+
+  // Test timeout
+  testTimeout: 10000,
+
+  // Verbose output
+  verbose: true,
+
+  // Clear mocks between tests
+  clearMocks: true,
+
+  // Reset modules between tests
+  resetModules: true,
 };
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-module.exports = createJestConfig(customJestConfig);
+module.exports = config;
