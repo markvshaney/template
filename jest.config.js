@@ -14,6 +14,8 @@ const config = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     // Handle image imports
     '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/__mocks__/fileMock.js',
+    // Map msw/node to use the correct file
+    '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
   },
 
   // Test file patterns
@@ -54,7 +56,7 @@ const config = {
   extensionsToTreatAsEsm: ['.ts', '.tsx', '.mts', '.jsx'],
 
   // Transform ignore patterns
-  transformIgnorePatterns: ['node_modules/(?!(nanoid|next|@\\w+/\\w+))'],
+  transformIgnorePatterns: ['node_modules/(?!(nanoid|next|msw|@mswjs/interceptors|@\\w+/\\w+))'],
 
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
