@@ -1,273 +1,126 @@
-# Step 3: Set Up Code Quality Tools - AI-Enhanced Plan
-
-## Overview
-
-This step focuses on setting up comprehensive code quality tools to ensure consistent development practices, code formatting, and automated quality checks throughout the project.
+# Step 3: Document-Centric Database Schema Implementation
 
 ## Original Checklist Step
 
-- Task: Configure code quality tools for consistent development
-- Implementation:
-  - Set up ESLint with TypeScript, React, and a11y plugins
-  - Configured Prettier for consistent code formatting
-  - Implemented Husky pre-commit hooks for code quality checks
-  - Added lint-staged to run linters only on changed files
-  - Added commitlint for commit message validation
-  - Created VS Code settings and extension recommendations
-  - Set up Jest for testing with TypeScript support
-  - Enhanced documentation in CODE_QUALITY.md
+Step 3 initially focused on implementing a basic memory system with a PostgreSQL database and Prisma ORM. The original implementation supported memory creation, retrieval, and a simple consolidation mechanism using a vector database for embedding storage.
 
-## AI-Enhanced Implementation Plan
+## Revision Purpose
 
-### 1. Dependencies Setup
+The project has been redirected to focus on web search and retrieval augmented generation (RAG) while maintaining backward compatibility with existing memory functionality. This revision implements a document-centric approach to better support:
 
-```json
-{
-  "devDependencies": {
-    // ESLint and plugins
-    "eslint": "^8.57.0",
-    "eslint-config-next": "^14.1.3",
-    "eslint-plugin-react": "^7.34.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-jsx-a11y": "^6.8.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-jest": "^27.9.0",
+- Document storage and chunking
+- Vector embeddings for semantic search
+- Web search history tracking
+- Integration with external AI services
 
-    // Prettier and integration
-    "prettier": "^3.2.5",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
+## Key Components Implemented
 
-    // Git hooks and commit validation
-    "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
-    "@commitlint/cli": "^18.6.1",
-    "@commitlint/config-conventional": "^18.6.2",
+### 1. Document-Centric Database Schema
 
-    // Testing
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "@testing-library/jest-dom": "^6.4.2",
-    "@testing-library/react": "^14.2.1",
-    "@types/jest": "^29.5.12"
-  }
-}
+- Added new Prisma models: `Document`, `Chunk`, `SearchQuery`, and `SearchResult`
+- Implemented relationships between models for coherent data flow
+- Maintained compatibility with existing `Memory` and `Session` models
+
+### 2. Database Utility Functions
+
+- Created functions for document management (creation, retrieval, deletion)
+- Implemented chunking functionality for document processing
+- Added vector similarity search capabilities
+- Developed search history tracking functions
+- Maintained backward compatibility with memory-based functions
+
+### 3. Vector Utilities
+
+- Implemented vector operations for embedding manipulation
+- Added cosine similarity calculation for semantic search
+- Created utility functions for vector normalization and distance calculation
+
+## Technical Decisions
+
+| Decision                  | Rationale                                                               |
+| ------------------------- | ----------------------------------------------------------------------- |
+| Document-centric schema   | Better alignment with RAG architecture and web search functionality     |
+| Maintaining legacy models | Ensures backward compatibility with existing code                       |
+| Chunking approach         | Enables fine-grained semantic search over document content              |
+| Vector embedding field    | Enables similarity search using PostgreSQL vector operations            |
+| JSON metadata fields      | Provides flexibility for storing various document and search attributes |
+
+## Files Created or Modified
+
+- `prisma/schema.prisma`: Updated schema with new document and search models
+- `src/lib/db.ts`: Added document, chunk, and search history functions
+- `src/lib/vector.ts`: Created new utility file for vector operations
+- `src/lib/db.test.ts`: Updated tests for document and search functionality
+- `__mocks__/@prisma/client.js`: Extended Prisma mock for testing
+
+## Implementation Notes
+
+### Schema Design
+
+The revised schema introduces a hierarchical structure:
+
+- Documents contain multiple chunks
+- Each chunk stores embedding vectors and keywords
+- Search queries link to multiple search results
+- Users relate to documents, memories, and search queries
+
+All models include metadata fields for extensibility, allowing additional attributes to be stored without schema changes.
+
+### Vector Operations
+
+The implementation uses a sophisticated vector similarity search approach:
+
+- Cosine similarity for finding related chunks/documents
+- PostgreSQL vector operations for efficient database-level similarity calculations
+- Support for hybrid search using both vector similarities and keyword matching
+
+### Backward Compatibility
+
+The revision maintains all original memory functionality while adding new document capabilities:
+
+- Legacy memory creation and retrieval functions remain unchanged
+- Memory consolidation still works with the existing schema
+- Session management is preserved
+- Vector operations support both new and old models
+
+## Verification Status
+
+- ✅ Database schema successfully updated with document-centric models
+- ✅ Utility functions implemented for document and chunk management
+- ✅ Vector operations implemented for similarity search
+- ✅ Tests created for new document-centric functionality
+- ✅ Backward compatibility confirmed with existing memory functions
+
+## Challenges and Solutions
+
+| Challenge                          | Solution                                               |
+| ---------------------------------- | ------------------------------------------------------ |
+| Type conflicts with Prisma client  | Created custom typings for document models             |
+| Vector embedding storage           | Used Postgres vector operations with type assertions   |
+| Maintaining backward compatibility | Preserved all existing functions while adding new ones |
+| Mock implementation for tests      | Extended Prisma client mock with document models       |
+
+## Future Improvements
+
+- Implement a more efficient vector database solution (e.g., pgvector extension)
+- Add document preprocessing pipeline for better chunking
+- Implement batch operations for document and chunk creation
+- Optimize similarity search for large document collections
+- Add document versioning for tracking changes over time
+
+## Git Commit Message
+
 ```
+feat(db): implement document-centric database schema
 
-### 2. Configuration Files
+- Add Document, Chunk, SearchQuery, and SearchResult models
+- Create document management utility functions
+- Implement vector operations for similarity search
+- Add search history tracking functionality
+- Maintain backward compatibility with memory functions
+- Update tests for new document-centric functionality
 
-#### ESLint Configuration (.eslintrc.js)
-
-```javascript
-module.exports = {
-  extends: [
-    'next/core-web-vitals',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:jsx-a11y/recommended',
-    'plugin:jest/recommended',
-    'prettier',
-  ],
-  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'jsx-a11y', 'jest', 'prettier'],
-  rules: {
-    // Custom rules for the project
-  },
-  settings: {
-    react: {
-      version: 'detect',
-    },
-  },
-};
+This revision supports a document-centric approach for web search and
+retrieval augmented generation while maintaining compatibility with
+existing memory functionality.
 ```
-
-#### Prettier Configuration (.prettierrc)
-
-```json
-{
-  "semi": true,
-  "trailingComma": "es5",
-  "singleQuote": true,
-  "printWidth": 100,
-  "tabWidth": 2,
-  "useTabs": false
-}
-```
-
-#### Husky Configuration
-
-```bash
-# .husky/pre-commit
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-npx lint-staged
-
-# .husky/commit-msg
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-npx --no -- commitlint --edit $1
-```
-
-#### Lint-staged Configuration (.lintstagedrc.js)
-
-```javascript
-module.exports = {
-  '*.{js,jsx,ts,tsx}': ['eslint --fix', 'prettier --write'],
-  '*.{json,md}': ['prettier --write'],
-};
-```
-
-#### Commitlint Configuration (commitlint.config.js)
-
-```javascript
-module.exports = {
-  extends: ['@commitlint/config-conventional'],
-};
-```
-
-#### VS Code Settings (.vscode/settings.json)
-
-```json
-{
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "typescript.tsdk": "node_modules/typescript/lib"
-}
-```
-
-### 3. Implementation Phases
-
-1. **Setup Phase**
-
-   - Install all required dependencies
-   - Initialize Husky
-   - Create configuration files
-   - Set up VS Code settings
-
-2. **Configuration Phase**
-
-   - Configure ESLint with all plugins
-   - Set up Prettier with project preferences
-   - Configure Husky hooks
-   - Set up lint-staged
-   - Configure commitlint
-
-3. **Testing Phase**
-
-   - Test ESLint rules
-   - Verify Prettier formatting
-   - Test Husky hooks
-   - Verify commit message validation
-   - Test VS Code integration
-
-4. **Documentation Phase**
-   - Create CODE_QUALITY.md
-   - Document configuration choices
-   - Add usage examples
-   - Create troubleshooting guide
-
-### 4. Files to Create/Modify
-
-1. **Configuration Files**
-
-   - `.eslintrc.js`
-   - `.prettierrc`
-   - `.husky/pre-commit`
-   - `.husky/commit-msg`
-   - `.lintstagedrc.js`
-   - `commitlint.config.js`
-   - `.vscode/settings.json`
-   - `.vscode/extensions.json`
-
-2. **Documentation**
-
-   - `CODE_QUALITY.md`
-
-3. **Package Updates**
-   - `package.json`
-
-### 5. Quality Assurance Measures
-
-1. **Code Quality**
-
-   - ESLint catches all code quality issues
-   - Prettier formats code consistently
-   - TypeScript type checking is enforced
-   - React best practices are followed
-
-2. **Git Workflow**
-
-   - Pre-commit hooks prevent bad commits
-   - Commit messages follow conventional commits
-   - Only changed files are linted
-
-3. **IDE Integration**
-   - VS Code settings provide consistent experience
-   - Format on save works correctly
-   - ESLint fixes are applied automatically
-
-### 6. Success Criteria
-
-1. **Functionality**
-
-   - All tools are properly installed and configured
-   - Git hooks are working as expected
-   - VS Code integration is functioning
-   - Commit message validation is active
-
-2. **Performance**
-
-   - Linting is fast and efficient
-   - Pre-commit hooks don't slow down development
-   - VS Code remains responsive
-
-3. **Developer Experience**
-   - Clear documentation is available
-   - Configuration is intuitive
-   - Error messages are helpful
-   - Tools work together seamlessly
-
-### 7. Risk Mitigation
-
-1. **Configuration Conflicts**
-
-   - Test configurations with sample code
-   - Document any known issues
-   - Provide fallback options
-
-2. **Performance Impact**
-
-   - Monitor hook execution time
-   - Optimize lint-staged patterns
-   - Cache results where possible
-
-3. **Developer Adoption**
-   - Provide clear documentation
-   - Include examples
-   - Create troubleshooting guide
-
-### 8. Dependencies
-
-1. **Required Tools**
-
-   - Node.js and npm
-   - Git
-   - VS Code
-
-2. **Project Dependencies**
-   - TypeScript
-   - React
-   - Next.js
-
-## Next Steps
-
-1. Review this plan
-2. Get approval to proceed
-3. Begin implementation
-4. Provide regular progress updates
-5. Conduct final review and approval
