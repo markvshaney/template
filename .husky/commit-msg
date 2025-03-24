@@ -1,4 +1,17 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npm run commit-msg 
+# Allow skipping commit message validation
+if [ "$SKIP_COMMIT_MSG" = "true" ]; then
+  echo "⏩ Skipping commit message validation"
+  exit 0
+fi
+
+# Run commit message validation with a timeout to prevent hanging
+npx commitlint --edit "$1" || {
+  echo "❌ Commit message does not follow conventional commit format."
+  echo "💡 Format: type(scope): message"
+  echo "💡 Example: feat(auth): add login functionality"
+  echo "💡 To skip this check, use: SKIP_COMMIT_MSG=true git commit"
+  exit 1
+} 

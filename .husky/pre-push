@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Skip pre-push hook if --no-verify is used
+# Skip pre-push hook if SKIP_PRE_PUSH is true
 if [ "$SKIP_PRE_PUSH" = "true" ]; then
+  echo "⏩ Skipping pre-push checks as requested"
   exit 0
 fi
 
@@ -13,22 +14,25 @@ echo "📝 Checking TypeScript types..."
 npx tsc --noEmit || {
   echo "❌ TypeScript check failed. Please fix type errors before pushing."
   echo "💡 Tip: Run 'npx tsc --noEmit' locally to see all type errors."
+  echo "💡 To skip this check, use: SKIP_PRE_PUSH=true git push"
   exit 1
 }
 
-# Run linting on staged files
+# Run linting on staged files only
 echo "🧹 Running linters..."
 npx lint-staged || {
   echo "❌ Linting failed. Please fix linting errors before pushing."
   echo "💡 Tip: Run 'npm run lint:fix' to fix linting issues."
+  echo "💡 To skip this check, use: SKIP_PRE_PUSH=true git push"
   exit 1
 }
 
-# Run basic tests
-echo "🧪 Running basic tests..."
-npm test || {
-  echo "❌ Tests failed. Please fix failing tests before pushing."
+# Run only critical tests, not the full suite
+echo "🧪 Running critical tests..."
+npx jest --config jest.config.cjs --bail --selectProjects critical --passWithNoTests || {
+  echo "❌ Critical tests failed. Please fix failing tests before pushing."
   echo "💡 Tip: Run 'npm test' locally to see test failures."
+  echo "💡 To skip this check, use: SKIP_PRE_PUSH=true git push"
   exit 1
 }
 

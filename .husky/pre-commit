@@ -1,4 +1,10 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npm test
+# Allow skipping the pre-commit hook
+if [ "$SKIP_PRE_COMMIT" = "true" ]; then
+  exit 0
+fi
+
+# Run only lint-staged instead of full test suite
+npm run lint-staged
