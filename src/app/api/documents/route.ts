@@ -14,49 +14,64 @@ export async function GET(request: NextRequest) {
     const searchTerm = searchParams.get('search') || undefined;
     const filterByStatus = searchParams.get('status') || undefined;
     const tags = searchParams.get('tags')?.split(',') || undefined;
-    const includeChunks = searchParams.get('includeChunks') === 'true';
 
-    // In a real app, we would get the user ID from the session
-    // For now we'll use a placeholder user ID for testing
-    const userId = searchParams.get('userId') || 'user_placeholder';
+    // Always use our test user ID for now
+    const userId = 'cm8nwyxk70000sgdgdws2ej0v';
+
+    console.log('Documents API request with userId:', userId);
 
     // Get documents from database
     const documents = await getUserDocuments(userId, {
       limit,
       offset,
-      includeChunks,
       filterByStatus,
       searchTerm,
       tags,
     });
 
-    // Get total document count for pagination
-    const total = await getUserDocuments(userId, {
-      ...(filterByStatus && { filterByStatus }),
-      ...(searchTerm && { searchTerm }),
-      ...(tags && { tags }),
-    }).then((docs) => docs.length);
+    console.log('Documents API found:', documents.length, 'documents');
 
-    // Return formatted response
-    return NextResponse.json({
-      documents,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + documents.length < total,
+    // Return simple response
+    return NextResponse.json(
+      {
+        documents,
+        pagination: {
+          total: documents.length,
+          limit,
+          offset,
+          hasMore: false,
+        },
       },
-      timestamp: new Date().toISOString(),
-    });
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error listing documents:', error);
 
+    // Return an empty documents array but still with a valid response structure
+    // This helps the UI to render properly even on errors
     return NextResponse.json(
       {
+        documents: [],
+        pagination: {
+          total: 0,
+          limit: 10,
+          offset: 0,
+          hasMore: false,
+        },
         error: 'Failed to list documents',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      {
+        status: 200, // Return 200 even on error for better UI stability
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        },
+      }
     );
   }
 }

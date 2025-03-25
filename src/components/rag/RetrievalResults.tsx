@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, KeyboardEvent } from 'react';
 import { RetrievalResult } from '@/lib/rag/retrieval';
 import { VectorSearchResult } from '@/lib/rag/vector-store';
 
@@ -63,6 +63,16 @@ export function RetrievalResults({
             <div
               className="p-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center cursor-pointer"
               onClick={() => toggleChunk(result.chunk.id)}
+              onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleChunk(result.chunk.id);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={!!expandedChunks[result.chunk.id]}
+              aria-controls={`chunk-content-${result.chunk.id}`}
             >
               <div>
                 <span className="font-medium">

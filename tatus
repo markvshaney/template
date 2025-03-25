@@ -1,0 +1,17 @@
+warning: in the working copy of '.specstory/history/.what-is-this.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2025-03-24_10-54-resolving-git-hooks-causing-ai-hang.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'checklist.md', LF will be replaced by CRLF the next time Git touches it
+D	.eslintrc.js
+M	.specstory/history/2025-03-24_10-54-resolving-git-hooks-causing-ai-hang.md
+M	__mocks__/@prisma/client.js
+M	__tests__/lib/db/vector-operations.test.ts
+M	checklist.md
+M	prisma/dev.db
+M	src/app/api/rag/process/route.ts
+M	src/components/rag/DocumentUpload.tsx
+M	src/components/rag/RetrievalResults.tsx
+M	src/lib/ai/embeddings.ts
+M	src/lib/ai/ollama.ts
+M	src/lib/db/cache.ts
+M	src/lib/db/embeddings.ts
+M	src/lib/rag/vector-store.ts

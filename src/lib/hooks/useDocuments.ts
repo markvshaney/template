@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Document } from '@prisma/client';
 
 interface DocumentWithChunks extends Document {
@@ -26,6 +26,7 @@ interface UseDocumentsProps {
 interface UseDocumentsReturn {
   documents: DocumentWithChunks[];
   loading: boolean;
+  setLoading: (isLoading: boolean) => void;
   error: Error | null;
   pagination: PaginationState;
   fetchDocuments: (options?: {
@@ -34,7 +35,6 @@ interface UseDocumentsReturn {
     status?: string;
     search?: string;
     tags?: string[];
-    includeChunks?: boolean;
   }) => Promise<void>;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
@@ -47,9 +47,11 @@ interface UseDocumentsReturn {
 export function useDocuments({
   initialLimit = 10,
   initialOffset = 0,
-  userId,
+  userId = 'cm8nwyxk70000sgdgdws2ej0v',
   onError,
 }: UseDocumentsProps = {}): UseDocumentsReturn {
+  console.log('useDocuments hook initialized with userId:', userId);
+
   const [documents, setDocuments] = useState<DocumentWithChunks[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -60,11 +62,13 @@ export function useDocuments({
     hasMore: false,
   });
 
+  // Keep track of the latest request to prevent race conditions
+  const latestRequestIdRef = useRef<number>(0);
+
   // State for filtering
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
   const [searchTerm, setSearchTerm] = useState<string | undefined>();
   const [filterTags, setFilterTags] = useState<string[] | undefined>();
-  const [includeChunks, setIncludeChunks] = useState(false);
 
   const fetchDocuments = useCallback(
     async (options?: {
@@ -73,7 +77,6 @@ export function useDocuments({
       status?: string;
       search?: string;
       tags?: string[];
-      includeChunks?: boolean;
     }) => {
       const {
         limit = pagination.limit,
@@ -81,74 +84,90 @@ export function useDocuments({
         status = filterStatus,
         search = searchTerm,
         tags = filterTags,
-        includeChunks: includeChunksOption = includeChunks,
       } = options || {};
+
+      // Create a unique ID for this request to handle race conditions
+      const requestId = ++latestRequestIdRef.current;
 
       // Update state for filters
       setFilterStatus(status);
       setSearchTerm(search);
       setFilterTags(tags);
-      setIncludeChunks(includeChunksOption);
 
       setLoading(true);
       setError(null);
 
       try {
-        // Build query params
-        const params = new URLSearchParams();
-        params.append('limit', limit.toString());
-        params.append('offset', offset.toString());
-
-        if (userId) {
-          params.append('userId', userId);
-        }
-
-        if (status) {
-          params.append('status', status);
-        }
-
-        if (search) {
-          params.append('search', search);
-        }
-
-        if (tags && tags.length > 0) {
-          params.append('tags', tags.join(','));
-        }
-
-        if (includeChunksOption) {
-          params.append('includeChunks', 'true');
-        }
+        // Use the simplified API that directly queries the database
+        const url = `/api/documents-basic`;
+        console.log(`[Request ${requestId}] Fetching documents from:`, url);
 
         // Fetch documents
-        const response = await fetch(`/api/documents?${params.toString()}`);
+        const response = await fetch(url);
+        console.log(`[Request ${requestId}] Response status:`, response.status);
+
+        // Check if this is still the latest request
+        if (requestId !== latestRequestIdRef.current) {
+          console.log(`[Request ${requestId}] Abandoned - newer request in progress`);
+          return; // Abandon this request as it's outdated
+        }
 
         if (!response.ok) {
           throw new Error(`Failed to fetch documents: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        // Check if response is empty
+        const responseText = await response.text();
 
-        // Update state
-        setDocuments(data.documents);
-        setPagination(data.pagination);
+        // Check again if this is still the latest request before processing
+        if (requestId !== latestRequestIdRef.current) {
+          console.log(
+            `[Request ${requestId}] Abandoned during processing - newer request in progress`
+          );
+          return; // Abandon this request as it's outdated
+        }
+
+        if (!responseText || responseText.trim() === '') {
+          console.error(`[Request ${requestId}] Empty response from server`);
+          throw new Error('Empty response from server');
+        }
+
+        const data = JSON.parse(responseText);
+        console.log(`[Request ${requestId}] API Response data:`, data);
+
+        if (!data.documents) {
+          console.error(`[Request ${requestId}] No documents property in API response:`, data);
+          throw new Error('Invalid response from server: missing documents');
+        }
+
+        // Only update state if this is still the latest request
+        if (requestId === latestRequestIdRef.current) {
+          setDocuments(data.documents);
+          setPagination({
+            total: data.pagination?.total || 0,
+            limit,
+            offset,
+            hasMore: data.pagination?.hasMore || false,
+          });
+        } else {
+          console.log(`[Request ${requestId}] Abandoned at final step - newer request completed`);
+        }
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        setError(error);
-        onError?.(error);
+        console.error(`[Request ${requestId}] Error in useDocuments:`, err);
+        // Only update error state if this is still the latest request
+        if (requestId === latestRequestIdRef.current) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          setError(error);
+          onError?.(error);
+        }
       } finally {
-        setLoading(false);
+        // Only update loading state if this is still the latest request
+        if (requestId === latestRequestIdRef.current) {
+          setLoading(false);
+        }
       }
     },
-    [
-      pagination.limit,
-      pagination.offset,
-      filterStatus,
-      searchTerm,
-      filterTags,
-      includeChunks,
-      userId,
-      onError,
-    ]
+    [pagination.limit, pagination.offset, filterStatus, searchTerm, filterTags, onError]
   );
 
   // Pagination helpers
@@ -194,6 +213,7 @@ export function useDocuments({
   return {
     documents,
     loading,
+    setLoading,
     error,
     pagination,
     fetchDocuments,

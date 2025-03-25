@@ -3,7 +3,12 @@
  * Utilities for storing and retrieving vector embeddings from the database
  */
 
-import { PrismaClient, Embedding as PrismaEmbedding, Chunk as PrismaChunk } from '@prisma/client';
+import {
+  PrismaClient,
+  Embedding as PrismaEmbedding,
+  Chunk as PrismaChunk,
+  Document as PrismaDocument,
+} from '@prisma/client';
 
 // Initialize Prisma client
 const prisma = new PrismaClient();
@@ -35,7 +40,7 @@ export interface SimilaritySearchOptions {
 export interface SimilaritySearchResult {
   chunk: PrismaChunk;
   score: number;
-  document?: any; // Full document if includeDocument is true
+  document?: PrismaDocument; // Full document if includeDocument is true
 }
 
 /**
@@ -47,7 +52,7 @@ export async function storeEmbedding(input: EmbeddingInput): Promise<PrismaEmbed
       chunkId: input.chunkId,
       modelName: input.modelName,
       dimensions: input.dimensions,
-      vector: input.vector as any,
+      vectorData: JSON.stringify(input.vector), // Convert vector to string for storage
     },
   });
 }
@@ -63,7 +68,7 @@ export async function storeEmbeddings(embeddings: EmbeddingInput[]): Promise<Pri
           chunkId: embedding.chunkId,
           modelName: embedding.modelName,
           dimensions: embedding.dimensions,
-          vector: embedding.vector as any,
+          vectorData: JSON.stringify(embedding.vector), // Convert vector to string for storage
         },
       })
     )
@@ -78,7 +83,10 @@ export async function updateEmbedding(
   vector: number[],
   modelName?: string
 ): Promise<PrismaEmbedding> {
-  const data: any = { vector: vector as any };
+  const data: { vectorData: string; modelName?: string } = {
+    vectorData: JSON.stringify(vector),
+  };
+
   if (modelName) {
     data.modelName = modelName;
   }
@@ -141,16 +149,9 @@ export async function similaritySearch(
   queryVector: number[],
   options: SimilaritySearchOptions = {}
 ): Promise<SimilaritySearchResult[]> {
-  const {
-    limit = 5,
-    minScore = 0.7,
-    filterByDocumentIds,
-    includeMetadata = true,
-    includeDocument = false,
-  } = options;
+  const { limit = 5, minScore = 0.7, filterByDocumentIds, includeDocument = false } = options;
 
-  // For now, retrieve all relevant chunks since we don't have vector search in DB yet
-  // In a real implementation, this would be a vector similarity query
+  // First, get all relevant chunks
   const chunks = await prisma.chunk.findMany({
     where: {
       ...(filterByDocumentIds
@@ -164,25 +165,49 @@ export async function similaritySearch(
     },
   });
 
+  // Then, get the embeddings separately
+  const chunkIds = chunks.map((chunk) => chunk.id);
+  const embeddings = await prisma.embedding.findMany({
+    where: {
+      chunkId: { in: chunkIds },
+    },
+  });
+
+  // Create a lookup map for faster access
+  const embeddingMap = new Map<string, string>();
+  for (const embedding of embeddings) {
+    embeddingMap.set(embedding.chunkId, embedding.vectorData);
+  }
+
   // Compute similarity scores in memory
-  // In production, this would be done by the database
   const results = chunks
     .map((chunk) => {
-      // For demonstration purposes, we're treating the embedding as any[]
-      // In a real application, you would use proper vector operations
-      const embedding = chunk.embedding as unknown as number[];
+      const vectorData = embeddingMap.get(chunk.id);
 
-      // Calculate cosine similarity (simplified)
-      let score = 0;
-      if (embedding && embedding.length === queryVector.length) {
-        score = cosineSimilarity(queryVector, embedding);
+      // Skip chunks without embeddings
+      if (!vectorData) {
+        return { chunk, score: 0, document: includeDocument ? chunk.document : undefined };
       }
 
-      return {
-        chunk,
-        score,
-        document: includeDocument ? chunk.document : undefined,
-      };
+      try {
+        // Parse the vector data from JSON string
+        const embeddingVector = JSON.parse(vectorData) as number[];
+
+        // Calculate cosine similarity
+        let score = 0;
+        if (embeddingVector && embeddingVector.length === queryVector.length) {
+          score = cosineSimilarity(queryVector, embeddingVector);
+        }
+
+        return {
+          chunk,
+          score,
+          document: includeDocument ? chunk.document : undefined,
+        };
+      } catch (error) {
+        console.error(`Error parsing vector data for chunk ${chunk.id}:`, error);
+        return { chunk, score: 0, document: includeDocument ? chunk.document : undefined };
+      }
     })
     .filter((result) => result.score >= minScore)
     .sort((a, b) => b.score - a.score)

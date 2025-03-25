@@ -1,14 +1,18 @@
 import path from 'path';
-import type { StorybookConfig } from '@storybook/nextjs';
 import type { Configuration } from 'webpack';
 
-const config = (config: Configuration) => {
+/**
+ * Storybook webpack configuration
+ * @param baseConfig - The base webpack configuration
+ * @returns The enhanced webpack configuration
+ */
+const config = (baseConfig: Configuration): Configuration => {
   return {
-    ...config,
+    ...baseConfig,
     resolve: {
-      ...config.resolve,
+      ...baseConfig.resolve,
       alias: {
-        ...config.resolve?.alias,
+        ...baseConfig.resolve?.alias,
         '@': path.resolve(__dirname, '../src'),
       },
     },

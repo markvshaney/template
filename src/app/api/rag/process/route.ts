@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { chunkDocument } from '@/lib/rag/document-processing';
+import { chunkDocument, DocumentMetadata } from '@/lib/rag/document-processing';
 import { EmbeddingGenerator } from '@/lib/ai/embeddings';
 import { getDocumentById, updateDocumentStatus, storeDocumentWithChunks } from '@/lib/db/documents';
 import { storeEmbedding, EmbeddingInput } from '@/lib/db/embeddings';
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
           id: dbDocument.id,
           content: dbDocument.content,
           metadata: {
-            ...(dbDocument.metadata as any),
+            ...(JSON.parse(dbDocument.metadata) as DocumentMetadata),
             title: dbDocument.title,
           },
         };
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Store document with chunks in database
-        const { document: storedDocument, chunks: storedChunks } = await storeDocumentWithChunks(
+        const { document: storedDocument } = await storeDocumentWithChunks(
           document,
           chunks,
           dbDocument.userId

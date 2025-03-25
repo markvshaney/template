@@ -1,15 +1,106 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Document } from '@prisma/client';
 import { useDocumentActions } from '@/lib/hooks/useDocumentActions';
+
+interface DocumentItemProps {
+  document: Document;
+  onSelect?: (document: Document) => void;
+  onDelete?: (documentId: string) => void;
+}
+
+// Memo-ize the DocumentItem component to prevent unnecessary re-renders
+const DocumentItem = React.memo(function DocumentItem({
+  document,
+  onSelect,
+  onDelete,
+}: DocumentItemProps) {
+  // Use document actions hook for delete functionality
+  const { deleteDocument, loading: deleteLoading } = useDocumentActions({
+    onSuccess: (action) => {
+      if (action === 'delete' && onDelete) {
+        onDelete(document.id);
+      }
+    },
+  });
+
+  // Handle delete with confirmation
+  const handleDelete = (documentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this document?')) {
+      deleteDocument(documentId);
+    }
+  };
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className="relative flex items-center px-4 py-5 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0"
+      onClick={() => onSelect && onSelect(document)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect && onSelect(document);
+        }
+      }}
+      aria-label={`View details for ${document.title}`}
+    >
+      <div className="min-w-0 flex-1">
+        <h3 className="text-sm font-medium text-blue-600">{document.title}</h3>
+        <div className="mt-1 flex items-center text-xs text-gray-500">
+          <span className="truncate">{document.source || 'No source'}</span>
+          <span className="mx-1">•</span>
+          <span>{new Date(document.createdAt).toLocaleString()}</span>
+        </div>
+        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{document.content}</p>
+        {document.tagsString && (
+          <div className="mt-2">
+            {document.tagsString.split(',').map((tag) => (
+              <span
+                key={`${document.id}-${tag}`}
+                className="inline-block bg-gray-100 px-2 py-0.5 text-xs rounded mr-1"
+              >
+                {tag.trim()}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      {onDelete && (
+        <div className="ml-4 flex-shrink-0">
+          <button
+            type="button"
+            className="inline-flex items-center rounded-full border border-gray-300 bg-white p-1 text-gray-400 shadow-sm hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            onClick={(e) => handleDelete(document.id, e)}
+            disabled={deleteLoading}
+          >
+            <svg
+              className="h-5 w-5"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
 
 interface DocumentListProps {
   documents: Document[];
   isLoading?: boolean;
   error?: Error | null;
-  onRefresh?: () => void;
+  onRefresh?: () => Promise<void>;
   onSelect?: (document: Document) => void;
-  onDelete?: (documentId: string) => void;
-  emptyMessage?: string;
+  onDelete?: (documentId?: string) => void;
 }
 
 export function DocumentList({
@@ -19,261 +110,110 @@ export function DocumentList({
   onRefresh,
   onSelect,
   onDelete,
-  emptyMessage = 'No documents found',
 }: DocumentListProps) {
-  const { deleteDocument, loading: deleteLoading } = useDocumentActions({
-    onSuccess: (action, _document) => {
-      if (action === 'delete' && onDelete) {
-        onDelete(_document.id);
+  // Prevent extra renders by using a stable local state and reduced effects
+  const [localLoading, setLocalLoading] = useState(false);
+
+  // Use memo for stable callbacks
+  const handleRefresh = useCallback(async () => {
+    if (onRefresh) {
+      setLocalLoading(true);
+      try {
+        await onRefresh();
+      } finally {
+        // Small delay before hiding loading state
+        setTimeout(() => setLocalLoading(false), 500);
       }
-      if (onRefresh) {
-        onRefresh();
-      }
-    },
-  });
-
-  const handleDelete = async (documentId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (confirm('Are you sure you want to delete this document?')) {
-      await deleteDocument(documentId);
     }
-  };
+  }, [onRefresh]);
 
-  const getDocumentTypeIcon = (contentType: string) => {
-    switch (contentType) {
-      case 'text/plain':
-        return (
-          <svg
-            className="w-6 h-6 text-gray-400"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        );
-      case 'application/pdf':
-        return (
-          <svg
-            className="w-6 h-6 text-red-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-            />
-          </svg>
-        );
-      case 'text/markdown':
-        return (
-          <svg
-            className="w-6 h-6 text-blue-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-            />
-          </svg>
-        );
-      default:
-        return (
-          <svg
-            className="w-6 h-6 text-gray-400"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        );
+  // Only update loading state after a deliberate delay to prevent flickering
+  useEffect(() => {
+    let isMounted = true;
+
+    if (isLoading && !localLoading) {
+      // Delay showing loading state to prevent flicker on fast loads
+      const timer = setTimeout(() => {
+        if (isMounted) setLocalLoading(true);
+      }, 500);
+      return () => {
+        clearTimeout(timer);
+        isMounted = false;
+      };
+    } else if (!isLoading && localLoading) {
+      // Add a small delay when transitioning from loading to not loading
+      const timer = setTimeout(() => {
+        if (isMounted) setLocalLoading(false);
+      }, 300);
+      return () => {
+        clearTimeout(timer);
+        isMounted = false;
+      };
     }
-  };
 
-  const getStatusBadge = (status: string) => {
-    const statusClasses = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      processing: 'bg-blue-100 text-blue-800',
-      completed: 'bg-green-100 text-green-800',
-      failed: 'bg-red-100 text-red-800',
+    return () => {
+      isMounted = false;
     };
+  }, [isLoading, localLoading]);
 
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          statusClasses[status as keyof typeof statusClasses] || 'bg-gray-100 text-gray-800'
-        }`}
-      >
-        {status}
-      </span>
-    );
-  };
-
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleString();
-  };
-
-  if (isLoading) {
-    return (
-      <div className="p-8 flex justify-center">
-        <svg
-          className="animate-spin h-8 w-8 text-gray-500"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
-      </div>
-    );
-  }
-
+  // For error state
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
-        <p className="font-semibold">Error loading documents:</p>
-        <p>{error.message}</p>
-        {onRefresh && (
-          <button
-            className="mt-2 text-sm font-medium text-red-700 hover:text-red-900"
-            onClick={onRefresh}
-          >
-            Try again
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  if (documents.length === 0) {
-    return (
-      <div className="p-8 text-center">
-        <svg
-          className="mx-auto h-12 w-12 text-gray-400"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+      <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-700">
+        <h3 className="text-lg font-medium mb-2">Error loading documents</h3>
+        <p className="mb-3">{error.message}</p>
+        <button
+          onClick={() => handleRefresh()}
+          className="px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-        <h3 className="mt-2 text-sm font-medium text-gray-900">{emptyMessage}</h3>
-        {onRefresh && (
-          <button
-            type="button"
-            className="mt-1 text-sm text-blue-600 hover:text-blue-500"
-            onClick={onRefresh}
-          >
-            Refresh
-          </button>
-        )}
+          Try Again
+        </button>
       </div>
     );
   }
 
+  // For loading state - but only if we don't have documents yet or explicit loading
+  if (localLoading && (!documents || documents.length === 0)) {
+    return (
+      <div className="flex justify-center p-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // For empty state
+  if (!documents || documents.length === 0) {
+    return (
+      <div className="bg-white p-8 text-center border border-gray-100 rounded-md">
+        <p className="text-gray-500 mb-4">No documents found</p>
+        <button
+          onClick={() => handleRefresh()}
+          className="px-4 py-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+        >
+          Refresh
+        </button>
+      </div>
+    );
+  }
+
+  // If we have documents, show them - even during loading
   return (
     <div className="overflow-hidden bg-white shadow sm:rounded-md">
-      <ul className="divide-y divide-gray-200">
+      {localLoading && (
+        <div className="p-2 bg-blue-50 text-blue-700 text-sm text-center">
+          Refreshing documents...
+        </div>
+      )}
+      <div className="divide-y divide-gray-200">
         {documents.map((document) => (
-          <li key={document.id} className="relative">
-            <div
-              className={`block transition hover:bg-gray-50 ${onSelect ? 'cursor-pointer' : ''}`}
-              onClick={() => onSelect && onSelect(document)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelect && onSelect(document);
-                }
-              }}
-              role={onSelect ? 'button' : undefined}
-              tabIndex={onSelect ? 0 : undefined}
-            >
-              <div className="flex items-center px-4 py-4 sm:px-6">
-                <div className="flex min-w-0 flex-1 items-center">
-                  <div className="flex-shrink-0">{getDocumentTypeIcon(document.contentType)}</div>
-                  <div className="min-w-0 flex-1 px-4">
-                    <div>
-                      <p className="truncate text-sm font-medium text-blue-600">{document.title}</p>
-                      <p className="mt-1 flex items-center text-sm text-gray-500">
-                        <span className="truncate">{document.source || 'No source'}</span>
-                      </p>
-                      <div className="mt-2 flex items-center text-sm text-gray-500">
-                        <p className="text-xs">Updated: {formatDate(document.updatedAt)}</p>
-                        <span className="mx-2">•</span>
-                        {getStatusBadge(document.processingStatus)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    className="inline-flex items-center rounded-full border border-transparent bg-red-100 p-1.5 text-red-600 shadow-sm hover:bg-red-200 focus:outline-none"
-                    onClick={(e) => handleDelete(document.id, e)}
-                    disabled={deleteLoading}
-                    aria-label="Delete document"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </li>
+          <DocumentItem
+            key={document.id}
+            document={document}
+            onSelect={onSelect}
+            onDelete={onDelete}
+          />
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

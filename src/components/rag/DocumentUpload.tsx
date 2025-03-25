@@ -1,5 +1,4 @@
-import React, { useState, useRef, ChangeEvent, DragEvent } from 'react';
-import { Document } from '@/lib/rag/document-processing';
+import React, { useState, useRef, ChangeEvent, DragEvent, KeyboardEvent } from 'react';
 
 interface DocumentUploadProps {
   onUpload: (files: File[]) => void;
@@ -107,6 +106,15 @@ export function DocumentUpload({
         onDragLeave={handleDrag}
         onDrop={handleDrop}
         onClick={handleButtonClick}
+        onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleButtonClick();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Upload documents"
       >
         <input
           ref={fileInputRef}

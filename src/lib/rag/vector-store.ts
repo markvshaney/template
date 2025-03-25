@@ -18,7 +18,7 @@ export interface VectorChunk {
   /** Vector embedding */
   embedding: number[];
   /** Metadata fields for filtering */
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 /**
@@ -44,7 +44,7 @@ export interface VectorSearchOptions {
   /** Minimum similarity score threshold */
   minScore?: number;
   /** Filter by metadata */
-  filter?: Record<string, any>;
+  filter?: Record<string, unknown>;
 }
 
 /**
@@ -105,13 +105,17 @@ export class InMemoryVectorStore {
         for (const [key, value] of Object.entries(filter)) {
           // Handle nested metadata paths (e.g., 'metadata.author')
           const keyParts = key.split('.');
-          let currentValue: any = v;
+          let currentValue: unknown = v;
 
           for (const part of keyParts) {
-            if (currentValue === undefined || currentValue === null) {
+            if (
+              currentValue === undefined ||
+              currentValue === null ||
+              typeof currentValue !== 'object'
+            ) {
               return false;
             }
-            currentValue = currentValue[part];
+            currentValue = (currentValue as Record<string, unknown>)[part];
           }
 
           if (currentValue !== value) {

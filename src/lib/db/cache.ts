@@ -11,9 +11,19 @@ import { v4 as uuidv4 } from 'uuid';
  * Type for search response to be cached
  */
 export interface SearchCacheData {
-  results: any[];
+  results: SearchResultItem[];
   timestamp: number;
   metadata?: Record<string, unknown>;
+}
+
+/**
+ * Generic search result item
+ */
+export interface SearchResultItem {
+  title?: string;
+  url?: string;
+  snippet?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -22,7 +32,7 @@ export interface SearchCacheData {
 export interface CacheInput {
   query: string;
   provider: string;
-  results: any[];
+  results: SearchResultItem[];
   expirationMinutes?: number;
   metadata?: Record<string, unknown>;
 }
@@ -160,13 +170,9 @@ export async function isCached(query: string, provider: string): Promise<boolean
  * Invalidates a specific cache entry
  *
  * @param query The search query
- * @param provider The search provider
  * @returns The deleted cache entry or null if not found
  */
-export async function invalidateCache(
-  query: string,
-  provider: string
-): Promise<SearchCache | null> {
+export async function invalidateCache(query: string): Promise<SearchCache | null> {
   try {
     return await prisma.searchCache.delete({
       where: {

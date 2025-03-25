@@ -61,11 +61,17 @@ export function prepareQueryFilter(options: {
   }
 
   if (userId) {
-    filter.document = { userId };
+    if (!filter.document) {
+      filter.document = {};
+    }
+    (filter.document as Record<string, unknown>).userId = userId;
   }
 
   if (processStatus) {
-    filter.document = { ...filter.document, processingStatus: processStatus };
+    if (!filter.document) {
+      filter.document = {};
+    }
+    (filter.document as Record<string, unknown>).processingStatus = processStatus;
   }
 
   if (searchTerm) {
@@ -74,10 +80,18 @@ export function prepareQueryFilter(options: {
   }
 
   if (tags && tags.length > 0) {
-    filter.document = {
-      ...filter.document,
-      tags: { hasSome: tags },
-    };
+    // For SQLite we need to use string operations instead of array operations
+    const tagConditions = tags.map((tag) => ({
+      tagsString: {
+        contains: tag,
+        mode: 'insensitive' as const,
+      },
+    }));
+
+    if (!filter.document) {
+      filter.document = {};
+    }
+    (filter.document as Record<string, unknown>).OR = tagConditions;
   }
 
   return filter;
@@ -90,21 +104,24 @@ export function documentToDbFormat(
   document: Document,
   userId: string
 ): Omit<PrismaDocument, 'id' | 'createdAt' | 'updatedAt'> {
+  const metadata = document.metadata ? JSON.stringify(document.metadata) : '{}';
+  const tags = document.metadata?.tags ? document.metadata.tags.join(',') : '';
+
   return {
-    title: document.metadata.title || 'Untitled Document',
+    title: document.metadata?.title || 'Untitled Document',
     content: document.content,
-    contentType: document.metadata.documentType || 'text/plain',
-    source: document.metadata.url || null,
+    contentType: document.metadata?.documentType || 'text/plain',
+    source: document.metadata?.url || null,
     userId,
-    metadata: JSON.stringify(document.metadata || {}),
-    fileName: document.metadata.fileName || null,
-    fileSize: document.metadata.fileSize || null,
-    mimeType: document.metadata.mimeType || null,
+    metadata,
+    fileName: document.metadata?.fileName || null,
+    fileSize: document.metadata?.fileSize || null,
+    mimeType: document.metadata?.mimeType || null,
     processingStatus: 'pending',
     processingError: null,
     isIndexed: false,
     indexedAt: null,
-    tagsString: document.metadata.tags ? document.metadata.tags.join(',') : '',
+    tagsString: tags,
   };
 }
 
@@ -112,7 +129,13 @@ export function documentToDbFormat(
  * Convert from database Document to application format
  */
 export function dbDocumentToAppFormat(dbDocument: PrismaDocument): Document {
-  const metadata = JSON.parse(dbDocument.metadata as string) as DocumentMetadata;
+  let metadata: DocumentMetadata;
+  try {
+    metadata = JSON.parse(dbDocument.metadata as string) as DocumentMetadata;
+  } catch (e) {
+    metadata = {} as DocumentMetadata;
+  }
+
   return {
     id: dbDocument.id,
     content: dbDocument.content,
@@ -188,8 +211,9 @@ interface DocumentWhereClause {
   OR?: Array<
     | { title: { contains: string; mode: 'insensitive' } }
     | { content: { contains: string; mode: 'insensitive' } }
+    | { tagsString: { contains: string; mode: 'insensitive' } }
   >;
-  tags?: { hasSome: string[] };
+  tagsString?: { contains: string; mode: 'insensitive' };
   [key: string]: unknown;
 }
 
@@ -231,7 +255,17 @@ export async function getUserDocuments(
   }
 
   if (tags && tags.length > 0) {
-    where.tags = { hasSome: tags };
+    // For SQLite, we need to use string operations since it doesn't support array operations
+    const tagConditions = tags.map((tag) => ({
+      tagsString: { contains: tag, mode: 'insensitive' as const },
+    }));
+
+    // If we already have OR conditions, we need to merge them
+    if (where.OR) {
+      where.OR = [...where.OR, ...tagConditions] as DocumentWhereClause['OR'];
+    } else {
+      where.OR = tagConditions as DocumentWhereClause['OR'];
+    }
   }
 
   return prisma.document.findMany({
@@ -448,7 +482,7 @@ export async function countUserDocuments(
   }
 
   if (tags && tags.length > 0) {
-    where.tags = { hasSome: tags };
+    where.tagsString = { contains: tags[0], mode: 'insensitive' };
   }
 
   return prisma.document.count({ where });

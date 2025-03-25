@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   visual-regression:
@@ -19,18 +20,37 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build Storybook
         run: npm run build-storybook
+        env:
+          STORYBOOK_DISABLE_TELEMETRY: 1
+          STORYBOOK_DISABLE_UPDATE_NOTIFICATION: 1
 
       - name: Percy Visual Testing
-        uses: percy/storybook-action@v1
-        with:
-          storybook_build_dir: 'storybook-static'
-          storybook_config_dir: '.storybook'
-          storybook_static_dir: 'public'
-          storybook_port: 6006
+        run: npx percy snapshot storybook-static --include-all
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          PERCY_BRANCH: ${{ github.head_ref || github.ref_name }}
+          PERCY_PARALLEL_TOTAL: 1
+          PERCY_PARALLEL_NONCE: ${{ github.run_id }}
+
+      - name: Upload Storybook Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-static
+          path: storybook-static
+          retention-days: 3

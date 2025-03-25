@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals';
-import { PrismaClient } from '@prisma/client';
 
 // Mock implementation for @prisma/client
 const mockMemory = {
@@ -71,9 +70,67 @@ const mockSearchResult = {
 
 const mockPrismaClient = {
   // Common database operations
-  $connect: jest.fn(),
-  $disconnect: jest.fn(),
-  $transaction: jest.fn((operations) => Promise.all(operations)),
+  $connect: jest.fn().mockResolvedValue(undefined),
+  $disconnect: jest.fn().mockResolvedValue(undefined),
+
+  // Enhanced transaction support with proper rollback functionality
+  $transaction: jest.fn((operations) => {
+    if (Array.isArray(operations)) {
+      return Promise.all(operations).catch((error) => {
+        // Simulate transaction rollback on error
+        console.error('Transaction rolled back:', error);
+        throw error;
+      });
+    }
+
+    // Handle function-based transactions
+    if (typeof operations === 'function') {
+      try {
+        return Promise.resolve(operations(mockPrismaClient));
+      } catch (error) {
+        // Simulate transaction rollback on error
+        console.error('Transaction rolled back:', error);
+        return Promise.reject(error);
+      }
+    }
+
+    return Promise.resolve(operations);
+  }),
+
+  // Error simulation helper (for testing error scenarios)
+  $simulateError: jest.fn((modelName, operation) => {
+    if (!mockPrismaClient[modelName]) {
+      throw new Error(`Model ${modelName} does not exist in mock`);
+    }
+
+    const originalFn = mockPrismaClient[modelName][operation];
+    if (!originalFn) {
+      throw new Error(`Operation ${operation} does not exist on model ${modelName}`);
+    }
+
+    // Replace the function with one that throws an error
+    mockPrismaClient[modelName][operation] = jest.fn(() =>
+      Promise.reject(new Error(`Simulated ${modelName}.${operation} error`))
+    );
+
+    // Return a cleanup function to restore the original behavior
+    return () => {
+      mockPrismaClient[modelName][operation] = originalFn;
+    };
+  }),
+
+  // Clear all mocks and reset their behavior
+  $clearMocks: jest.fn(() => {
+    Object.keys(mockPrismaClient).forEach((key) => {
+      if (key.startsWith('$')) return;
+
+      Object.keys(mockPrismaClient[key]).forEach((method) => {
+        if (mockPrismaClient[key][method].mockClear) {
+          mockPrismaClient[key][method].mockClear();
+        }
+      });
+    });
+  }),
 
   // User model
   user: {
@@ -99,10 +156,23 @@ const mockPrismaClient = {
     deleteMany: jest.fn(() => Promise.resolve({ count: 1 })),
   },
 
-  // Document model
+  // Document model with improved error handling and query support
   document: {
-    create: jest.fn(() => Promise.resolve({ ...mockDocument, chunks: [] })),
+    create: jest.fn((args) =>
+      Promise.resolve({
+        ...mockDocument,
+        ...args?.data,
+        id: args?.data?.id || 'test-document-id',
+        chunks: [],
+      })
+    ),
     findUnique: jest.fn((args) => {
+      if (args?.where?.id === 'non-existent-id') {
+        return Promise.resolve(null);
+      }
+      if (args?.where?.id === 'error-document-id') {
+        return Promise.reject(new Error('Database error while finding document'));
+      }
       if (args?.where?.id === 'test-document-id') {
         return Promise.resolve({ ...mockDocument, chunks: [mockChunk] });
       } else if (args?.where?.id === 'document-to-delete-id') {
@@ -110,8 +180,48 @@ const mockPrismaClient = {
       }
       return Promise.resolve({ ...mockDocument, chunks: [] });
     }),
-    findMany: jest.fn(() => Promise.resolve([mockDocument])),
-    delete: jest.fn(() => Promise.resolve({ ...mockDocument, id: 'document-to-delete-id' })),
+    findMany: jest.fn((args) => {
+      // Support filtering
+      if (args?.where?.userId === 'non-existent-user') {
+        return Promise.resolve([]);
+      }
+      if (args?.where?.contentType) {
+        return Promise.resolve([
+          {
+            ...mockDocument,
+            contentType: args.where.contentType,
+          },
+        ]);
+      }
+
+      // Support pagination
+      const limit = args?.take || 10;
+      const docs = Array(limit)
+        .fill(0)
+        .map((_, i) => ({
+          ...mockDocument,
+          id: `test-document-id-${i}`,
+          title: `Test Document ${i}`,
+        }));
+
+      return Promise.resolve(docs);
+    }),
+    update: jest.fn((args) =>
+      Promise.resolve({
+        ...mockDocument,
+        ...args?.data,
+        id: args?.where?.id || 'test-document-id',
+      })
+    ),
+    delete: jest.fn((args) => {
+      if (args?.where?.id === 'error-document-id') {
+        return Promise.reject(new Error('Database error while deleting document'));
+      }
+      return Promise.resolve({
+        ...mockDocument,
+        id: args?.where?.id || 'document-to-delete-id',
+      });
+    }),
     deleteMany: jest.fn(() => Promise.resolve({ count: 1 })),
   },
 
