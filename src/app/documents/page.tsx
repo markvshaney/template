@@ -1,137 +1,152 @@
 'use client';
 
 import React, { useState } from 'react';
-import { DocumentUpload } from '@/components/rag/DocumentUpload';
-import { RetrievalResults } from '@/components/rag/RetrievalResults';
-import { RetrievalResult } from '@/lib/rag/retrieval';
-import { VectorSearchResult } from '@/lib/rag/vector-store';
-import { DocumentChunk } from '@/lib/rag/document-processing';
+import { Document } from '@prisma/client';
+import { DocumentUpload } from '@/components/documents/DocumentUpload';
+import { DocumentList } from '@/components/documents/DocumentList';
+import { DocumentViewer } from '@/components/documents/DocumentViewer';
+import {
+  DocumentFilters,
+  DocumentFilters as DocumentFiltersType,
+} from '@/components/documents/DocumentFilters';
+import { useDocuments } from '@/lib/hooks/useDocuments';
+import { useDocumentUpload } from '@/lib/hooks/useDocumentUpload';
 
 export default function DocumentsPage() {
-  const [isUploading, setIsUploading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadError, setUploadError] = useState<Error | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // State for selected document
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
-  // Create a mock retrieval result matching the required types
-  const [retrievalResult, setRetrievalResult] = useState<RetrievalResult>({
-    context: '',
-    results: [],
+  // Filter state
+  const [filters, setFilters] = useState<DocumentFiltersType>({});
+
+  // Use custom hooks for document management
+  const {
+    documents,
+    loading,
+    error,
+    pagination,
+    fetchDocuments,
+    goToNextPage,
+    goToPreviousPage,
+    refreshDocuments,
+  } = useDocuments({
+    initialLimit: 10,
+    initialOffset: 0,
   });
 
-  const handleUpload = async (files: File[]) => {
-    if (!files.length) return;
+  const {
+    uploading: isUploading,
+    processingDocuments: isProcessing,
+    progress: uploadProgress,
+    error: uploadError,
+    uploadDocuments,
+  } = useDocumentUpload({
+    onSuccess: () => {
+      refreshDocuments();
+    },
+  });
 
-    setIsUploading(true);
-    setUploadError(null);
-    setUploadProgress(0);
+  // Handle filter changes
+  const handleFilterChange = (newFilters: DocumentFiltersType) => {
+    setFilters(newFilters);
 
-    try {
-      // Simulate upload progress
-      const uploadInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(uploadInterval);
-            return 90;
+    fetchDocuments({
+      status: newFilters.status,
+      search: newFilters.search,
+      tags: newFilters.tags,
+      offset: 0, // Reset to first page
+    });
+  };
+
+  // Get unique tags from all documents
+  const getUniqueTags = () => {
+    const tags = new Set<string>();
+
+    documents.forEach((doc) => {
+      if (doc.tagsString) {
+        doc.tagsString.split(',').forEach((tag) => {
+          if (tag.trim()) {
+            tags.add(tag.trim());
           }
-          return prev + 10;
         });
-      }, 300);
-
-      // Upload files to backend
-      const formData = new FormData();
-      files.forEach((file) => formData.append('files', file));
-
-      const response = await fetch('/api/rag/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      clearInterval(uploadInterval);
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
       }
+    });
 
-      setUploadProgress(100);
-      setIsUploading(false);
-
-      // Start processing
-      setIsProcessing(true);
-
-      // Simulate document processing
-      setTimeout(() => {
-        setIsProcessing(false);
-
-        // Create mock retrieval result with proper typing
-        const mockChunk: DocumentChunk = {
-          id: 'chunk1',
-          documentId: 'doc1',
-          content: 'This is a sample document chunk that would be retrieved.',
-          startPosition: 0,
-          endPosition: 54,
-          metadata: {
-            source: files[0].name,
-            page: 1,
-            chunkIndex: 0,
-            isFirst: true,
-            isLast: true,
-          },
-        };
-
-        const mockResults: VectorSearchResult[] = [
-          {
-            id: 'chunk1',
-            documentId: 'doc1',
-            chunk: mockChunk,
-            score: 0.92,
-          },
-        ];
-
-        setRetrievalResult({
-          context: 'Sample document content for retrieval context.',
-          results: mockResults,
-          sources: [
-            {
-              id: 'doc1',
-              title: files[0].name,
-            },
-          ],
-        });
-      }, 2000);
-    } catch (error) {
-      setUploadError(error instanceof Error ? error : new Error('Unknown upload error'));
-      setIsUploading(false);
-      setIsProcessing(false);
-    }
+    return Array.from(tags);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Document Management</h1>
+      <h1 className="text-3xl font-bold mb-6">Document Management</h1>
 
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Upload Documents</h2>
-          <DocumentUpload
-            onUpload={handleUpload}
-            isUploading={isUploading}
-            isProcessing={isProcessing}
-            progress={uploadProgress}
-            error={uploadError}
-            acceptedFileTypes={['.pdf', '.txt', '.md', '.docx']}
-            maxFileSizeMB={10}
-            maxFiles={5}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          {/* Filters */}
+          <DocumentFilters
+            onFilterChange={handleFilterChange}
+            initialFilters={filters}
+            availableTags={getUniqueTags()}
           />
+
+          {/* Document List */}
+          <DocumentList
+            documents={documents}
+            isLoading={loading}
+            error={error}
+            onRefresh={refreshDocuments}
+            onSelect={setSelectedDocument}
+            onDelete={() => refreshDocuments()}
+          />
+
+          {/* Pagination Controls */}
+          {documents.length > 0 && (
+            <div className="mt-4 flex justify-between items-center">
+              <div className="text-sm text-gray-500">
+                Showing {pagination.offset + 1} to {pagination.offset + documents.length} of{' '}
+                {pagination.total} documents
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={goToPreviousPage}
+                  disabled={pagination.offset === 0}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={goToNextPage}
+                  disabled={!pagination.hasMore}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">Document Chunks</h2>
-          <RetrievalResults
-            retrievalResult={retrievalResult}
-            isLoading={false}
-            showSources={true}
-          />
+          {/* Document Upload Section */}
+          <div className="bg-white p-4 border border-gray-200 rounded-lg mb-6">
+            <h2 className="text-lg font-semibold mb-4">Upload Documents</h2>
+            <DocumentUpload
+              onUpload={uploadDocuments}
+              isUploading={isUploading}
+              isProcessing={isProcessing}
+              progress={uploadProgress}
+              error={uploadError}
+            />
+          </div>
+
+          {/* Document Viewer */}
+          {selectedDocument && (
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold mb-4">Document Details</h2>
+              <DocumentViewer document={selectedDocument} />
+            </div>
+          )}
         </div>
       </div>
     </div>
