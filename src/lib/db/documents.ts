@@ -5,7 +5,6 @@
 
 import { PrismaClient, Document as PrismaDocument, Chunk as PrismaChunk } from '@prisma/client';
 import { Document, DocumentChunk, DocumentMetadata } from '../rag/document-processing';
-import { v4 as uuidv4 } from 'uuid';
 
 // Initialize Prisma client
 const prisma = new PrismaClient();
@@ -19,7 +18,7 @@ export interface DocumentInput {
   contentType: string;
   userId: string;
   source?: string | null;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   fileName?: string | null;
   fileSize?: number | null;
   mimeType?: string | null;
@@ -38,6 +37,50 @@ export interface ChunkInput {
   isLast: boolean;
   tokens: number;
   embeddingModel?: string | null;
+}
+
+/**
+ * Prepare a query filter for documents or chunks
+ */
+export function prepareQueryFilter(options: {
+  documentIds?: string[];
+  userId?: string;
+  processStatus?: string;
+  searchTerm?: string;
+  tags?: string[];
+}): Record<string, unknown> {
+  const { documentIds, userId, processStatus, searchTerm, tags } = options;
+  const filter: Record<string, unknown> = {};
+
+  if (documentIds && documentIds.length > 0) {
+    if (documentIds.length === 1) {
+      filter.documentId = documentIds[0];
+    } else {
+      filter.documentId = { in: documentIds };
+    }
+  }
+
+  if (userId) {
+    filter.document = { userId };
+  }
+
+  if (processStatus) {
+    filter.document = { ...filter.document, processingStatus: processStatus };
+  }
+
+  if (searchTerm) {
+    const searchClause = { contains: searchTerm, mode: 'insensitive' };
+    filter.OR = [{ content: searchClause }, { document: { title: searchClause } }];
+  }
+
+  if (tags && tags.length > 0) {
+    filter.document = {
+      ...filter.document,
+      tags: { hasSome: tags },
+    };
+  }
+
+  return filter;
 }
 
 /**
@@ -137,6 +180,20 @@ export async function getDocumentById(id: string): Promise<PrismaDocument | null
 }
 
 /**
+ * Document where clause type
+ */
+interface DocumentWhereClause {
+  userId: string;
+  processingStatus?: string;
+  OR?: Array<
+    | { title: { contains: string; mode: 'insensitive' } }
+    | { content: { contains: string; mode: 'insensitive' } }
+  >;
+  tags?: { hasSome: string[] };
+  [key: string]: unknown;
+}
+
+/**
  * Get documents for a user
  */
 export async function getUserDocuments(
@@ -160,7 +217,7 @@ export async function getUserDocuments(
   } = options;
 
   // Build where clause
-  const where: any = { userId };
+  const where: DocumentWhereClause = { userId };
 
   if (filterByStatus) {
     where.processingStatus = filterByStatus;
@@ -377,7 +434,7 @@ export async function countUserDocuments(
   const { filterByStatus, searchTerm, tags } = options;
 
   // Build where clause
-  const where: any = { userId };
+  const where: DocumentWhereClause = { userId };
 
   if (filterByStatus) {
     where.processingStatus = filterByStatus;

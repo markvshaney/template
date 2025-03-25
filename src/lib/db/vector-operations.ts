@@ -3,8 +3,8 @@
  * Comprehensive utilities for vector operations and similarity search
  */
 
-import { PrismaClient, Embedding as PrismaEmbedding, Chunk as PrismaChunk } from '@prisma/client';
-import { EmbeddingVector, VectorSearchOptions } from './types';
+import { PrismaClient, Chunk as PrismaChunk, Document as PrismaDocument } from '@prisma/client';
+import { EmbeddingVector } from './types';
 
 // Initialize Prisma client
 const prisma = new PrismaClient();
@@ -30,7 +30,7 @@ export interface VectorSearchResult {
   /** Distance value (lower is more similar) */
   distance: number;
   /** Parent document if requested */
-  document?: any;
+  document?: PrismaDocument;
 }
 
 /**
@@ -77,6 +77,15 @@ export interface EmbeddingWithVector {
   vectorData: string;
   /** Parsed vector data as number array */
   parsedVector: number[];
+}
+
+/**
+ * Type for database query filters
+ */
+export interface QueryFilter {
+  documentId?: { in: string[] };
+  document?: { userId: string };
+  [key: string]: unknown;
 }
 
 /**
@@ -234,6 +243,13 @@ export function distanceToSimilarity(
 }
 
 /**
+ * Alias for distanceToSimilarity for readability
+ */
+export function getScore(distance: number, metric: DistanceMetric = DistanceMetric.COSINE): number {
+  return distanceToSimilarity(distance, metric);
+}
+
+/**
  * Parse embedding data from string to array
  */
 export function parseEmbeddingVector(vectorData: string): number[] {
@@ -290,12 +306,11 @@ export async function vectorSimilaritySearch(
     minScore = 0.7,
     includeDocument = false,
     metric = DistanceMetric.COSINE,
-    includeContent = true,
     modelNames,
   } = options;
 
   // Build where clause based on filters
-  const where: any = {};
+  const where: QueryFilter = {};
 
   if (filterDocumentIds && filterDocumentIds.length > 0) {
     where.documentId = { in: filterDocumentIds };
